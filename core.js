@@ -2,6 +2,7 @@
  * Shoplify - Enterprise Core
  * App State, Router, Auth Flow, USD Currency, Escrow System
  * NO FAKE BALANCES - Everything from Firestore
+ * White/Gold App Theme, Black Auth Theme
  */
 
 class ShoplifyAppClass {
@@ -22,7 +23,9 @@ class ShoplifyAppClass {
             initialized: false,
             localCurrency: null,
             conversionRate: null,
-            usdBalance: 0
+            usdBalance: 0,
+            pendingDeepLink: null,
+            affiliateRef: null
         };
         this.screenCache = {};
         this.listeners = [];
@@ -32,6 +35,9 @@ class ShoplifyAppClass {
     async init() {
         console.log('🚀 Shoplify Enterprise Initializing...');
         this.showSplash();
+
+        // Check for deep links (store URLs, affiliate refs)
+        this.checkDeepLink();
 
         const countryResult = await GeolocationService.detectCountry();
         this.state.country = countryResult;
@@ -85,7 +91,17 @@ class ShoplifyAppClass {
 
                 this.hideAuth();
                 this.showApp();
-                this.navigate('home');
+
+                // Handle deep links after auth
+                if (this.state.pendingDeepLink) {
+                    const { screen, params } = this.state.pendingDeepLink;
+                    setTimeout(() => {
+                        this.navigate(screen, params);
+                        this.state.pendingDeepLink = null;
+                    }, 500);
+                } else {
+                    this.navigate('home');
+                }
             } else {
                 console.log('👤 No user authenticated');
                 this.state.user = null;
@@ -109,7 +125,37 @@ class ShoplifyAppClass {
         console.log('✅ Shoplify Core Initialized');
     }
 
-    // Convert USD to local currency for display only
+    checkDeepLink() {
+        const path = window.location.pathname;
+        const params = new URLSearchParams(window.location.search);
+
+        // Store URL: /store/storeId
+        if (path.startsWith('/store/')) {
+            const storeId = path.split('/store/')[1];
+            if (storeId) {
+                this.state.pendingDeepLink = { screen: 'store', params: storeId };
+            }
+        }
+
+        // Affiliate ref in URL
+        if (params.get('ref')) {
+            this.state.affiliateRef = params.get('ref');
+            
+            if (params.get('product')) {
+                this.state.pendingDeepLink = {
+                    screen: 'product-detail',
+                    params: params.get('product')
+                };
+            }
+            
+            // Track affiliate click
+            Firebase.trackEvent('affiliate_click', {
+                affiliateId: params.get('ref'),
+                url: window.location.href
+            }).catch(() => {});
+        }
+    }
+
     convertUSDtoLocal(usdAmount) {
         if (!usdAmount || usdAmount === 0) return 0;
         if (this.state.conversionRate) {
@@ -118,7 +164,6 @@ class ShoplifyAppClass {
         return usdAmount;
     }
 
-    // Format USD display
     formatUSD(amount) {
         if (amount === null || amount === undefined) return '$0.00';
         return '$' + Number(amount).toLocaleString('en-US', {
@@ -127,19 +172,16 @@ class ShoplifyAppClass {
         });
     }
 
-    // Format local currency for display
     formatLocalCurrency(usdAmount) {
         const localAmount = this.convertUSDtoLocal(usdAmount);
         const symbol = this.state.country?.symbol || '$';
         return symbol + ComponentFactory.formatNumber(localAmount);
     }
 
-    // Get real USD balance from Firestore
     getRealUSDBalance() {
         return this.state.profile?.walletBalance || 0;
     }
 
-    // Refresh balance from Firestore
     async refreshBalance() {
         if (!this.state.user) return 0;
         const result = await Firebase.getWalletBalance(this.state.user.uid);
@@ -208,12 +250,18 @@ class ShoplifyAppClass {
 
     showApp() {
         const el = document.getElementById('app-container');
-        if (el) el.classList.add('active');
+        if (el) {
+            el.classList.add('active');
+            document.body.classList.add('app-loaded');
+        }
     }
 
     hideApp() {
         const el = document.getElementById('app-container');
-        if (el) el.classList.remove('active');
+        if (el) {
+            el.classList.remove('active');
+            document.body.classList.remove('app-loaded');
+        }
     }
 
     setupNavigation() {
@@ -241,10 +289,19 @@ class ShoplifyAppClass {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
 
         const screenEl = document.getElementById(`screen-${screen}`);
-        if (screenEl) screenEl.classList.add('active');
+        if (screenEl) {
+            screenEl.classList.add('active');
+        } else {
+            // Fallback: try store-setup container for store-* screens
+            const fallbackEl = document.getElementById('screen-store-setup');
+            if (fallbackEl && screen.startsWith('store-')) {
+                fallbackEl.classList.add('active');
+            }
+        }
 
         document.querySelectorAll('.nav-item').forEach(item => {
-            item.classList.toggle('active', item.dataset.screen === screen);
+            item.classList.toggle('active', item.dataset.screen === screen || 
+                (screen.startsWith('store-') && item.dataset.screen === 'store-dashboard'));
         });
 
         if (addToHistory) {
@@ -259,7 +316,7 @@ class ShoplifyAppClass {
             screen,
             params,
             userId: this.state.user?.uid
-        });
+        }).catch(() => {});
     }
 
     goBack() {
@@ -287,13 +344,21 @@ class ShoplifyAppClass {
             'store': () => ShoplifyFeatures.renderStore(params),
             'seller-dashboard': () => ShoplifyFeatures.renderSellerDashboard(),
             'store-setup': () => ShoplifyFeatures.renderStoreSetup(),
+            'store-dashboard': () => ShoplifyFeatures.renderStoreDashboard(),
+            'store-customize': () => ShoplifyFeatures.renderStoreCustomize(),
+            'store-products': () => ShoplifyFeatures.renderStoreProductList(),
+            'store-add-product': () => ShoplifyFeatures.renderStoreAddProduct(),
+            'store-collections': () => ShoplifyFeatures.renderStoreCollections(),
+            'store-orders': () => ShoplifyFeatures.renderStoreOrderManagement(),
+            'store-customers': () => ShoplifyFeatures.renderStoreCustomers(),
+            'store-marketing': () => ShoplifyFeatures.renderStoreMarketing(),
+            'store-settings': () => ShoplifyFeatures.renderStoreSettingsPage(),
             'store-setup-branding': () => ShoplifyFeatures.renderStoreSetupBranding(),
             'store-setup-policies': () => ShoplifyFeatures.renderStorePolicies(),
             'store-setup-shipping': () => ShoplifyFeatures.renderStoreShipping(),
             'store-setup-payments': () => ShoplifyFeatures.renderStorePayments(),
             'store-setup-navigation': () => ShoplifyFeatures.renderStoreNavigation(),
             'store-setup-products': () => ShoplifyFeatures.renderStoreProducts(),
-            'store-setup-notifications': () => ShoplifyFeatures.renderStoreNotifications(),
             'store-setup-launch': () => ShoplifyFeatures.renderStoreLaunch(),
             'notifications': () => ShoplifyFeatures.renderNotifications(),
             'admin': () => ShoplifyFeatures.renderAdmin(),
@@ -557,7 +622,6 @@ class ShoplifyAppClass {
 
         Modal.close();
 
-        // Refresh balance from Firestore before checkout
         await this.refreshBalance();
         const balance = this.getRealUSDBalance();
         const total = this.getCartTotal() + 5.99;
@@ -567,12 +631,12 @@ class ShoplifyAppClass {
             const content = `
                 <div style="text-align:center;padding:16px 0">
                     <div style="font-size:3rem;margin-bottom:12px">💰</div>
-                    <p style="color:var(--gray-300);margin-bottom:16px">
+                    <p style="color:var(--gray-600);margin-bottom:16px">
                         <strong>Insufficient Balance</strong><br><br>
-                        Your balance: <strong style="color:var(--gold)">${this.formatUSD(balance)}</strong><br>
+                        Your balance: <strong style="color:var(--gold-dark)">${this.formatUSD(balance)}</strong><br>
                         Order total: <strong>${this.formatUSD(total)}</strong><br>
                         Shortfall: <strong style="color:var(--red)">${this.formatUSD(shortfall)}</strong>
-                        ${this.state.country?.currency !== 'USD' ? `<br><small style="color:var(--gray-500)">≈ ${this.formatLocalCurrency(shortfall)} ${this.state.country?.currency}</small>` : ''}
+                        ${this.state.country?.currency !== 'USD' ? `<br><small>≈ ${this.formatLocalCurrency(shortfall)} ${this.state.country?.currency}</small>` : ''}
                     </p>
                     <button class="btn btn-primary btn-block" onclick="Modal.close(); ShoplifyApp.navigate('wallet')">
                         💳 Deposit Funds
@@ -588,7 +652,7 @@ class ShoplifyAppClass {
 
         const confirmed = await Modal.confirm(
             `<strong>Confirm Purchase</strong><br><br>
-            Total: <strong style="color:var(--gold)">${this.formatUSD(total)}</strong><br>
+            Total: <strong style="color:var(--gold-dark)">${this.formatUSD(total)}</strong><br>
             ${this.state.country?.currency !== 'USD' ? `<small>≈ ${this.formatLocalCurrency(total)} ${this.state.country?.currency}</small><br>` : ''}
             <small style="color:var(--gray-500)">Funds will be held in escrow until you confirm delivery.</small>`,
             'Confirm Payment',
@@ -597,7 +661,6 @@ class ShoplifyAppClass {
 
         if (!confirmed) return;
 
-        // Deduct from wallet
         const deductResult = await Firebase.deductFromWallet(
             this.state.user.uid,
             total,
@@ -609,7 +672,6 @@ class ShoplifyAppClass {
             return;
         }
 
-        // Create order with escrow
         const orderResult = await Firebase.createOrder({
             customerId: this.state.user.uid,
             customerName: this.state.user.displayName,
@@ -628,7 +690,6 @@ class ShoplifyAppClass {
         });
 
         if (orderResult.success) {
-            // Record escrow
             await Firebase.collections.orders.doc(orderResult.orderId).update({
                 escrowId: 'ESC-' + orderResult.orderId.substring(0, 8).toUpperCase(),
                 escrowCreatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -641,20 +702,18 @@ class ShoplifyAppClass {
             Firebase.sendNotification(this.state.user.uid, {
                 type: 'escrow',
                 title: 'Payment Held in Escrow',
-                body: `$${total.toFixed(2)} held for order #${orderResult.orderId.substring(0, 8).toUpperCase()}. Funds released after delivery confirmation.`,
+                body: `$${total.toFixed(2)} held for order #${orderResult.orderId.substring(0, 8).toUpperCase()}.`,
                 data: { orderId: orderResult.orderId }
             });
 
-            // Notify seller
             const storeIds = [...new Set(this.state.cart.map(item => item.storeId).filter(Boolean))];
             for (const storeId of storeIds) {
                 const storeDoc = await Firebase.collections.stores.doc(storeId).get();
                 if (storeDoc.exists) {
-                    const store = storeDoc.data();
-                    Firebase.sendNotification(store.ownerId, {
+                    Firebase.sendNotification(storeDoc.data().ownerId, {
                         type: 'order_update',
                         title: 'New Order!',
-                        body: `You received a new order #${orderResult.orderId.substring(0, 8).toUpperCase()}. Funds held in escrow.`,
+                        body: `New order #${orderResult.orderId.substring(0, 8).toUpperCase()}. Funds in escrow.`,
                         data: { orderId: orderResult.orderId }
                     });
                 }
@@ -662,45 +721,29 @@ class ShoplifyAppClass {
 
             this.navigate('orders');
         } else {
-            // Refund on order failure
             await Firebase.creditWallet(this.state.user.uid, total, 'Refund - Order creation failed', 'refund');
             await this.refreshBalance();
             Toast.error('Order failed. Funds refunded.');
         }
     }
 
-    // RELEASE ESCROW (Seller confirms delivery)
     async releaseEscrow(orderId) {
         const orderResult = await Firebase.getOrderById(orderId);
-        if (!orderResult.success) {
-            Toast.error('Order not found');
-            return;
-        }
+        if (!orderResult.success) { Toast.error('Order not found'); return; }
 
         const order = orderResult.order;
-        if (order.escrowStatus !== 'held') {
-            Toast.error('Escrow already processed');
-            return;
-        }
+        if (order.escrowStatus !== 'held') { Toast.error('Escrow already processed'); return; }
 
-        // Calculate splits
         const platformFee = order.total * (APP_CONFIG.platformFee / 100);
         const sellerAmount = order.total - platformFee;
         const affiliateAmount = order.affiliateId ? order.total * (APP_CONFIG.baseAffiliateCommission / 100) : 0;
         const finalSellerAmount = sellerAmount - affiliateAmount;
 
-        // Release to seller
         await Firebase.creditWallet(order.storeOwnerId, finalSellerAmount, `Escrow released for order #${orderId.substring(0, 8)}`, 'escrow_release');
-
-        // Pay affiliate if applicable
         if (affiliateAmount > 0 && order.affiliateId) {
             await Firebase.creditWallet(order.affiliateId, affiliateAmount, `Affiliate commission for order #${orderId.substring(0, 8)}`, 'affiliate');
         }
 
-        // Pay platform fee
-        await Firebase.creditWallet('platform', platformFee, `Platform fee for order #${orderId.substring(0, 8)}`, 'platform_fee');
-
-        // Update order
         await Firebase.collections.orders.doc(orderId).update({
             escrowStatus: 'released',
             escrowReleasedAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -710,22 +753,14 @@ class ShoplifyAppClass {
         Toast.success('Escrow released to seller');
     }
 
-    // REFUND FROM ESCROW
     async refundEscrow(orderId, reason = '') {
         const orderResult = await Firebase.getOrderById(orderId);
-        if (!orderResult.success) {
-            Toast.error('Order not found');
-            return;
-        }
+        if (!orderResult.success) { Toast.error('Order not found'); return; }
 
         const order = orderResult.order;
-        if (order.escrowStatus !== 'held') {
-            Toast.error('Escrow already processed');
-            return;
-        }
+        if (order.escrowStatus !== 'held') { Toast.error('Escrow already processed'); return; }
 
         await Firebase.creditWallet(order.customerId, order.total, `Refund for order #${orderId.substring(0, 8)}`, 'refund');
-
         await Firebase.collections.orders.doc(orderId).update({
             escrowStatus: 'refunded',
             escrowRefundedAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -747,17 +782,15 @@ class ShoplifyAppClass {
             <div style="padding:8px 0">
                 <div class="form-group">
                     <label class="form-label">Enter Amount (USD)</label>
-                    <input type="number" class="form-input" id="deposit-amount" placeholder="Enter amount in USD" min="1" step="0.01">
-                    <p style="font-size:0.8rem;color:var(--gold);margin-top:8px" id="deposit-local-display"></p>
+                    <input type="number" class="form-input" id="deposit-amount" placeholder="Enter amount in USD" min="1" step="0.01" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)">
+                    <p style="font-size:0.8rem;color:var(--gold-dark);margin-top:8px" id="deposit-local-display"></p>
                 </div>
-                <div class="info-card" style="margin-bottom:16px">
-                    <div class="info-text" style="font-size:0.75rem">
-                        <strong>How it works:</strong><br>
-                        1. Enter amount in USD<br>
-                        2. See conversion to your local currency<br>
-                        3. Pay with Flutterwave in your local currency<br>
-                        4. USD balance updates in your wallet
-                    </div>
+                <div style="background:var(--cream);padding:12px;border-radius:8px;margin-bottom:16px;font-size:0.75rem;color:var(--gray-600)">
+                    <strong>How it works:</strong><br>
+                    1. Enter amount in USD<br>
+                    2. See conversion to your local currency<br>
+                    3. Pay with Flutterwave in your local currency<br>
+                    4. USD balance updates in your wallet
                 </div>
                 <p style="font-size:0.75rem;color:var(--gray-500);margin-bottom:16px">
                     ⚠️ Funds deposited are for purchases only. Withdrawals via Shoplify Wallet App.
@@ -790,9 +823,7 @@ class ShoplifyAppClass {
                 return;
             }
 
-            // Convert USD to local for Flutterwave
             const localAmount = this.convertUSDtoLocal(usdAmount);
-
             Toast.info(`Processing payment of ${this.formatLocalCurrency(usdAmount)}...`);
 
             const result = await FlutterwaveService.initializePayment({
@@ -804,7 +835,6 @@ class ShoplifyAppClass {
             });
 
             if (result.success) {
-                // Credit wallet with USD amount
                 await Firebase.creditWallet(
                     this.state.user.uid,
                     usdAmount,
@@ -899,7 +929,7 @@ class ShoplifyAppClass {
 
         Modal.confirm(
             `Subscribe to <strong>${tier.emoji} ${tier.name}</strong> plan for <strong>$${tier.priceUSD}/month</strong>?<br>
-            ${this.state.country?.currency !== 'USD' ? `<small style="color:var(--gold)">≈ ${this.formatLocalCurrency(tier.priceUSD)} ${this.state.country?.currency}</small><br>` : ''}
+            ${this.state.country?.currency !== 'USD' ? `<small style="color:var(--gold-dark)">≈ ${this.formatLocalCurrency(tier.priceUSD)} ${this.state.country?.currency}</small><br>` : ''}
             ✓ ${tier.productLimit.toLocaleString()} Products<br>
             ✓ ${tier.commission}% Commission<br>
             ✓ Regions: ${tier.regions.join(', ')}`,
@@ -959,40 +989,14 @@ const ShoplifyApp = new ShoplifyAppClass();
 window.ShoplifyApp = ShoplifyApp;
 
 // GLOBAL HANDLER FUNCTIONS
-window.handleDepositClick = function() {
-    ShoplifyApp.depositFunds();
-};
+window.handleDepositClick = function() { ShoplifyApp.depositFunds(); };
+window.handleWithdrawClick = function() { ShoplifyApp.withdrawFunds(); };
+window.handleTransferClick = function() { ShoplifyApp.transferFunds(); };
+window.handleCheckoutClick = function() { ShoplifyApp.checkout(); };
+window.handleAffiliateSubscribe = function(tierId) { ShoplifyApp.subscribeToTier(tierId); };
+window.handleDropshipActivate = function() { ShoplifyFeatures.activateDropship(); };
+window.handleCreateStore = function() { ShoplifyApp.navigate('store-setup'); };
+window.handleSignOut = function() { ShoplifyFeatures.signOut(); };
+window.handleReportClick = function(productId) { ShoplifyFeatures.showReportForm(productId); };
 
-window.handleWithdrawClick = function() {
-    ShoplifyApp.withdrawFunds();
-};
-
-window.handleTransferClick = function() {
-    ShoplifyApp.transferFunds();
-};
-
-window.handleCheckoutClick = function() {
-    ShoplifyApp.checkout();
-};
-
-window.handleAffiliateSubscribe = function(tierId) {
-    ShoplifyApp.subscribeToTier(tierId);
-};
-
-window.handleDropshipActivate = function() {
-    ShoplifyFeatures.activateDropship();
-};
-
-window.handleCreateStore = function() {
-    ShoplifyApp.navigate('store-setup');
-};
-
-window.handleSignOut = function() {
-    ShoplifyFeatures.signOut();
-};
-
-window.handleReportClick = function(productId) {
-    ShoplifyFeatures.showReportForm(productId);
-};
-
-console.log('✅ Shoplify Core Loaded - Real Balances Only');
+console.log('✅ Shoplify Core Loaded - Real Balances Only - White/Gold Theme');
