@@ -1,6 +1,7 @@
 /**
  * Shoplify - Enterprise Core
- * App State, Router, Auth Flow, Initialization
+ * App State, Router, Auth Flow, USD Currency, Escrow System
+ * NO FAKE BALANCES - Everything from Firestore
  */
 
 class ShoplifyAppClass {
@@ -20,7 +21,8 @@ class ShoplifyAppClass {
             isOnline: navigator.onLine,
             initialized: false,
             localCurrency: null,
-            conversionRate: null
+            conversionRate: null,
+            usdBalance: 0
         };
         this.screenCache = {};
         this.listeners = [];
@@ -42,23 +44,22 @@ class ShoplifyAppClass {
             if (rateResult.rates[countryResult.currency]) {
                 this.state.conversionRate = rateResult.rates[countryResult.currency];
             }
-            console.log('💱 Exchange rates loaded');
+            console.log('💱 Exchange rates loaded - 1 USD =', this.state.conversionRate, countryResult.currency);
         }
 
         const unsubscribe = Firebase.onAuthStateChanged(async (user) => {
             if (user) {
                 console.log('👤 User authenticated:', user.email);
-                console.log('🔑 Session persisted:', !user.isAnonymous);
-
                 this.state.user = Firebase.formatUserData(user);
 
                 const profileResult = await Firebase.getUserProfile(user.uid);
                 if (profileResult.success) {
                     this.state.profile = profileResult.profile;
+                    this.state.usdBalance = profileResult.profile.walletBalance || 0;
                     this.state.cart = profileResult.profile.cart || [];
                     this.state.wishlist = profileResult.profile.wishlist || [];
                     this.updateUIForUser();
-                    console.log('📋 Profile loaded from Firestore');
+                    console.log('📋 Profile loaded - Balance: $' + this.state.usdBalance.toFixed(2));
                 } else {
                     const newProfile = await Firebase.createUserProfile({
                         uid: user.uid,
@@ -67,16 +68,16 @@ class ShoplifyAppClass {
                         photoURL: user.photoURL || '',
                         country: this.state.country.countryCode,
                         countryCode: this.state.country.countryCode,
-                        currency: this.state.country.currency
+                        currency: 'USD'
                     });
                     if (newProfile.success) {
                         this.state.profile = newProfile.profile;
+                        this.state.usdBalance = 0;
                         this.updateUIForUser();
                     }
                 }
 
                 this.startRealtimeListeners(user.uid);
-
                 Firebase.trackEvent(ANALYTICS_EVENTS.sign_in, {
                     userId: user.uid,
                     country: this.state.country.countryCode
@@ -86,9 +87,10 @@ class ShoplifyAppClass {
                 this.showApp();
                 this.navigate('home');
             } else {
-                console.log('👤 No user authenticated - showing auth screen');
+                console.log('👤 No user authenticated');
                 this.state.user = null;
                 this.state.profile = null;
+                this.state.usdBalance = 0;
                 this.state.cart = [];
                 this.state.wishlist = [];
                 this.stopRealtimeListeners();
@@ -107,21 +109,49 @@ class ShoplifyAppClass {
         console.log('✅ Shoplify Core Initialized');
     }
 
-    convertToLocal(eurAmount) {
+    // Convert USD to local currency for display only
+    convertUSDtoLocal(usdAmount) {
+        if (!usdAmount || usdAmount === 0) return 0;
         if (this.state.conversionRate) {
-            return eurAmount * this.state.conversionRate;
+            return usdAmount * this.state.conversionRate;
         }
-        return eurAmount;
+        return usdAmount;
     }
 
-    formatLocalCurrency(eurAmount) {
-        const localAmount = this.convertToLocal(eurAmount);
-        const symbol = this.state.country?.symbol || '€';
-        return `${symbol}${ComponentFactory.formatNumber(localAmount)}`;
+    // Format USD display
+    formatUSD(amount) {
+        if (amount === null || amount === undefined) return '$0.00';
+        return '$' + Number(amount).toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
     }
 
-    formatEUR(eurAmount) {
-        return `€${ComponentFactory.formatNumber(eurAmount)}`;
+    // Format local currency for display
+    formatLocalCurrency(usdAmount) {
+        const localAmount = this.convertUSDtoLocal(usdAmount);
+        const symbol = this.state.country?.symbol || '$';
+        return symbol + ComponentFactory.formatNumber(localAmount);
+    }
+
+    // Get real USD balance from Firestore
+    getRealUSDBalance() {
+        return this.state.profile?.walletBalance || 0;
+    }
+
+    // Refresh balance from Firestore
+    async refreshBalance() {
+        if (!this.state.user) return 0;
+        const result = await Firebase.getWalletBalance(this.state.user.uid);
+        if (result.success) {
+            this.state.usdBalance = result.balance;
+            if (this.state.profile) {
+                this.state.profile.walletBalance = result.balance;
+            }
+            this.updateHeaderBalance();
+            return result.balance;
+        }
+        return this.state.usdBalance;
     }
 
     showSplash() {
@@ -257,6 +287,14 @@ class ShoplifyAppClass {
             'store': () => ShoplifyFeatures.renderStore(params),
             'seller-dashboard': () => ShoplifyFeatures.renderSellerDashboard(),
             'store-setup': () => ShoplifyFeatures.renderStoreSetup(),
+            'store-setup-branding': () => ShoplifyFeatures.renderStoreSetupBranding(),
+            'store-setup-policies': () => ShoplifyFeatures.renderStorePolicies(),
+            'store-setup-shipping': () => ShoplifyFeatures.renderStoreShipping(),
+            'store-setup-payments': () => ShoplifyFeatures.renderStorePayments(),
+            'store-setup-navigation': () => ShoplifyFeatures.renderStoreNavigation(),
+            'store-setup-products': () => ShoplifyFeatures.renderStoreProducts(),
+            'store-setup-notifications': () => ShoplifyFeatures.renderStoreNotifications(),
+            'store-setup-launch': () => ShoplifyFeatures.renderStoreLaunch(),
             'notifications': () => ShoplifyFeatures.renderNotifications(),
             'admin': () => ShoplifyFeatures.renderAdmin(),
             'admin-users': () => ShoplifyFeatures.renderAdminUsers(),
@@ -281,6 +319,7 @@ class ShoplifyAppClass {
         const profileListener = Firebase.listenToUserProfile(uid, (result) => {
             if (result.success) {
                 this.state.profile = result.profile;
+                this.state.usdBalance = result.profile.walletBalance || 0;
                 this.updateHeaderBalance();
             }
         });
@@ -311,34 +350,27 @@ class ShoplifyAppClass {
 
     updateHeaderBalance() {
         const balanceEl = document.getElementById('header-balance');
-        if (balanceEl && this.state.profile) {
-            const balance = this.state.profile.walletBalance || 0;
-            balanceEl.textContent = this.formatLocalCurrency(balance);
+        if (balanceEl) {
+            const balance = this.getRealUSDBalance();
+            balanceEl.textContent = this.formatUSD(balance);
         }
     }
 
     updateNotificationDot() {
         const dot = document.getElementById('notif-dot');
         if (dot) {
-            if (this.state.unreadNotifications > 0) {
-                dot.classList.add('active');
-            } else {
-                dot.classList.remove('active');
-            }
+            dot.classList.toggle('active', this.state.unreadNotifications > 0);
         }
     }
 
     updateCartDot() {
         const dot = document.getElementById('cart-dot');
         if (dot) {
-            if (this.state.cart.length > 0) {
-                dot.classList.add('active');
-            } else {
-                dot.classList.remove('active');
-            }
+            dot.classList.toggle('active', this.state.cart.length > 0);
         }
     }
 
+    // CART OPERATIONS
     addToCart(product, quantity = 1, variant = null) {
         const existingIndex = this.state.cart.findIndex(item => {
             if (variant) {
@@ -402,10 +434,6 @@ class ShoplifyAppClass {
         }, 0);
     }
 
-    getCartCount() {
-        return this.state.cart.reduce((count, item) => count + item.quantity, 0);
-    }
-
     saveCart() {
         localStorage.setItem('shoplify_cart', JSON.stringify(this.state.cart));
         if (this.state.user) {
@@ -451,20 +479,19 @@ class ShoplifyAppClass {
         return this.state.wishlist.includes(productId);
     }
 
+    // CART MODAL
     openCart() {
         if (this.state.cart.length === 0) {
             const content = ComponentFactory.emptyState(
                 '🛒',
                 'Your Cart is Empty',
-                'Browse products and add items to your cart.',
-                'Start Shopping',
-                'ShoplifyApp.navigate("home"); Modal.close();'
+                'Browse stores and add items to your cart.',
+                'Browse Stores',
+                'ShoplifyApp.navigate("search"); Modal.close();'
             );
             Modal.open(content, { title: 'Shopping Cart' });
             return;
         }
-
-        const symbol = this.state.country?.symbol || '€';
 
         let cartHTML = this.state.cart.map((item, index) => `
             <div class="cart-item">
@@ -472,7 +499,7 @@ class ShoplifyAppClass {
                 <div class="cart-item-info">
                     <div class="cart-item-name">${ComponentFactory.escapeHtml(item.name)}</div>
                     ${item.variant ? `<div style="font-size:0.75rem;color:var(--gray-500)">${item.variant.color || ''} ${item.variant.size || ''}</div>` : ''}
-                    <div class="cart-item-price">${this.formatLocalCurrency(item.price)}</div>
+                    <div class="cart-item-price">${this.formatUSD(item.price)}</div>
                     <div class="cart-item-actions">
                         <div class="quantity-selector">
                             <button class="quantity-btn" onclick="ShoplifyApp.updateCartQuantity(${index}, ${item.quantity - 1}); ShoplifyApp.openCart();">−</button>
@@ -496,15 +523,15 @@ class ShoplifyAppClass {
             <div class="cart-summary">
                 <div class="cart-summary-row">
                     <span>Subtotal</span>
-                    <span>${this.formatLocalCurrency(subtotal)}</span>
+                    <span>${this.formatUSD(subtotal)}</span>
                 </div>
                 <div class="cart-summary-row">
                     <span>Shipping</span>
-                    <span>${shipping > 0 ? this.formatLocalCurrency(shipping) : 'Free'}</span>
+                    <span>${shipping > 0 ? this.formatUSD(shipping) : 'Free'}</span>
                 </div>
                 <div class="cart-summary-total">
                     <span>Total</span>
-                    <span>${this.formatLocalCurrency(total)} <small style="color:var(--gray-500);font-size:0.75rem">(${this.formatEUR(total)})</small></span>
+                    <span>${this.formatUSD(total)}</span>
                 </div>
             </div>
             <div style="display:flex;gap:10px">
@@ -516,6 +543,7 @@ class ShoplifyAppClass {
         Modal.open(content, { title: 'Shopping Cart' });
     }
 
+    // CHECKOUT WITH ESCROW
     async checkout() {
         if (!this.state.user) {
             Toast.error('Please sign in to checkout');
@@ -529,8 +557,10 @@ class ShoplifyAppClass {
 
         Modal.close();
 
+        // Refresh balance from Firestore before checkout
+        await this.refreshBalance();
+        const balance = this.getRealUSDBalance();
         const total = this.getCartTotal() + 5.99;
-        const balance = this.state.profile?.walletBalance || 0;
 
         if (balance < total) {
             const shortfall = total - balance;
@@ -539,9 +569,10 @@ class ShoplifyAppClass {
                     <div style="font-size:3rem;margin-bottom:12px">💰</div>
                     <p style="color:var(--gray-300);margin-bottom:16px">
                         <strong>Insufficient Balance</strong><br><br>
-                        Your balance: <strong style="color:var(--gold)">${this.formatLocalCurrency(balance)}</strong><br>
-                        Order total: <strong>${this.formatLocalCurrency(total)}</strong> (${this.formatEUR(total)})<br>
-                        Shortfall: <strong style="color:var(--red)">${this.formatLocalCurrency(shortfall)}</strong>
+                        Your balance: <strong style="color:var(--gold)">${this.formatUSD(balance)}</strong><br>
+                        Order total: <strong>${this.formatUSD(total)}</strong><br>
+                        Shortfall: <strong style="color:var(--red)">${this.formatUSD(shortfall)}</strong>
+                        ${this.state.country?.currency !== 'USD' ? `<br><small style="color:var(--gray-500)">≈ ${this.formatLocalCurrency(shortfall)} ${this.state.country?.currency}</small>` : ''}
                     </p>
                     <button class="btn btn-primary btn-block" onclick="Modal.close(); ShoplifyApp.navigate('wallet')">
                         💳 Deposit Funds
@@ -555,56 +586,157 @@ class ShoplifyAppClass {
             return;
         }
 
-        const hasSeenWarning = localStorage.getItem('shoplify_deposit_warning_seen');
-        if (!hasSeenWarning) {
-            const confirmed = await Modal.confirm(
-                '⚠️ <strong>Important Notice:</strong> Money deposited into your Shoplify Marketplace Wallet can only be used for purchases inside Shoplify. Marketplace wallets cannot withdraw funds. For withdrawals, use the separate Shoplify Wallet App.<br><br>Do you understand and wish to proceed?',
-                'I Understand',
-                'Cancel'
-            );
+        const confirmed = await Modal.confirm(
+            `<strong>Confirm Purchase</strong><br><br>
+            Total: <strong style="color:var(--gold)">${this.formatUSD(total)}</strong><br>
+            ${this.state.country?.currency !== 'USD' ? `<small>≈ ${this.formatLocalCurrency(total)} ${this.state.country?.currency}</small><br>` : ''}
+            <small style="color:var(--gray-500)">Funds will be held in escrow until you confirm delivery.</small>`,
+            'Confirm Payment',
+            'Cancel'
+        );
 
-            if (!confirmed) return;
-            localStorage.setItem('shoplify_deposit_warning_seen', 'true');
-        }
+        if (!confirmed) return;
 
+        // Deduct from wallet
         const deductResult = await Firebase.deductFromWallet(
             this.state.user.uid,
             total,
-            `Purchase: ${this.state.cart.length} item(s)`
+            `Purchase: ${this.state.cart.length} item(s) - Held in Escrow`
         );
 
-        if (deductResult.success) {
-            const orderResult = await Firebase.createOrder({
-                customerId: this.state.user.uid,
-                customerName: this.state.user.displayName,
-                customerEmail: this.state.user.email,
-                items: this.state.cart,
-                subtotal: this.getCartTotal(),
-                shipping: 5.99,
-                total: total,
-                currency: 'EUR',
-                country: this.state.country?.countryCode || 'US',
-                status: 'pending'
+        if (!deductResult.success) {
+            Toast.error(deductResult.error || 'Payment failed');
+            return;
+        }
+
+        // Create order with escrow
+        const orderResult = await Firebase.createOrder({
+            customerId: this.state.user.uid,
+            customerName: this.state.user.displayName,
+            customerEmail: this.state.user.email,
+            items: this.state.cart,
+            subtotal: this.getCartTotal(),
+            shipping: 5.99,
+            total: total,
+            currency: 'USD',
+            country: this.state.country?.countryCode || 'US',
+            status: 'pending',
+            escrowStatus: 'held',
+            escrowAmount: total,
+            platformFee: total * (APP_CONFIG.platformFee / 100),
+            sellerAmount: total * (1 - APP_CONFIG.platformFee / 100)
+        });
+
+        if (orderResult.success) {
+            // Record escrow
+            await Firebase.collections.orders.doc(orderResult.orderId).update({
+                escrowId: 'ESC-' + orderResult.orderId.substring(0, 8).toUpperCase(),
+                escrowCreatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
 
-            if (orderResult.success) {
-                this.clearCart();
-                Toast.success('Order placed successfully!');
+            this.clearCart();
+            await this.refreshBalance();
+            Toast.success('Order placed! Funds held in escrow.');
 
-                Firebase.sendNotification(this.state.user.uid, {
-                    type: 'order_update',
-                    title: 'Order Confirmed',
-                    body: `Your order #${orderResult.orderId.substring(0, 8).toUpperCase()} has been placed and is being processed.`,
-                    data: { orderId: orderResult.orderId }
-                });
+            Firebase.sendNotification(this.state.user.uid, {
+                type: 'escrow',
+                title: 'Payment Held in Escrow',
+                body: `$${total.toFixed(2)} held for order #${orderResult.orderId.substring(0, 8).toUpperCase()}. Funds released after delivery confirmation.`,
+                data: { orderId: orderResult.orderId }
+            });
 
-                this.navigate('orders');
+            // Notify seller
+            const storeIds = [...new Set(this.state.cart.map(item => item.storeId).filter(Boolean))];
+            for (const storeId of storeIds) {
+                const storeDoc = await Firebase.collections.stores.doc(storeId).get();
+                if (storeDoc.exists) {
+                    const store = storeDoc.data();
+                    Firebase.sendNotification(store.ownerId, {
+                        type: 'order_update',
+                        title: 'New Order!',
+                        body: `You received a new order #${orderResult.orderId.substring(0, 8).toUpperCase()}. Funds held in escrow.`,
+                        data: { orderId: orderResult.orderId }
+                    });
+                }
             }
+
+            this.navigate('orders');
         } else {
-            Toast.error(deductResult.error || 'Payment failed');
+            // Refund on order failure
+            await Firebase.creditWallet(this.state.user.uid, total, 'Refund - Order creation failed', 'refund');
+            await this.refreshBalance();
+            Toast.error('Order failed. Funds refunded.');
         }
     }
 
+    // RELEASE ESCROW (Seller confirms delivery)
+    async releaseEscrow(orderId) {
+        const orderResult = await Firebase.getOrderById(orderId);
+        if (!orderResult.success) {
+            Toast.error('Order not found');
+            return;
+        }
+
+        const order = orderResult.order;
+        if (order.escrowStatus !== 'held') {
+            Toast.error('Escrow already processed');
+            return;
+        }
+
+        // Calculate splits
+        const platformFee = order.total * (APP_CONFIG.platformFee / 100);
+        const sellerAmount = order.total - platformFee;
+        const affiliateAmount = order.affiliateId ? order.total * (APP_CONFIG.baseAffiliateCommission / 100) : 0;
+        const finalSellerAmount = sellerAmount - affiliateAmount;
+
+        // Release to seller
+        await Firebase.creditWallet(order.storeOwnerId, finalSellerAmount, `Escrow released for order #${orderId.substring(0, 8)}`, 'escrow_release');
+
+        // Pay affiliate if applicable
+        if (affiliateAmount > 0 && order.affiliateId) {
+            await Firebase.creditWallet(order.affiliateId, affiliateAmount, `Affiliate commission for order #${orderId.substring(0, 8)}`, 'affiliate');
+        }
+
+        // Pay platform fee
+        await Firebase.creditWallet('platform', platformFee, `Platform fee for order #${orderId.substring(0, 8)}`, 'platform_fee');
+
+        // Update order
+        await Firebase.collections.orders.doc(orderId).update({
+            escrowStatus: 'released',
+            escrowReleasedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            status: 'delivered'
+        });
+
+        Toast.success('Escrow released to seller');
+    }
+
+    // REFUND FROM ESCROW
+    async refundEscrow(orderId, reason = '') {
+        const orderResult = await Firebase.getOrderById(orderId);
+        if (!orderResult.success) {
+            Toast.error('Order not found');
+            return;
+        }
+
+        const order = orderResult.order;
+        if (order.escrowStatus !== 'held') {
+            Toast.error('Escrow already processed');
+            return;
+        }
+
+        await Firebase.creditWallet(order.customerId, order.total, `Refund for order #${orderId.substring(0, 8)}`, 'refund');
+
+        await Firebase.collections.orders.doc(orderId).update({
+            escrowStatus: 'refunded',
+            escrowRefundedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            refundReason: reason,
+            status: 'cancelled'
+        });
+
+        Toast.success('Funds refunded to buyer');
+    }
+
+    // DEPOSIT FUNDS (USD)
     async depositFunds() {
         if (!this.state.user) {
             Toast.error('Please sign in first');
@@ -614,12 +746,21 @@ class ShoplifyAppClass {
         const content = `
             <div style="padding:8px 0">
                 <div class="form-group">
-                    <label class="form-label">Amount (EUR)</label>
-                    <input type="number" class="form-input" id="deposit-amount" placeholder="Enter amount in EUR" min="1" step="0.01">
-                    <p style="font-size:0.75rem;color:var(--gold);margin-top:4px" id="deposit-local-display"></p>
+                    <label class="form-label">Enter Amount (USD)</label>
+                    <input type="number" class="form-input" id="deposit-amount" placeholder="Enter amount in USD" min="1" step="0.01">
+                    <p style="font-size:0.8rem;color:var(--gold);margin-top:8px" id="deposit-local-display"></p>
+                </div>
+                <div class="info-card" style="margin-bottom:16px">
+                    <div class="info-text" style="font-size:0.75rem">
+                        <strong>How it works:</strong><br>
+                        1. Enter amount in USD<br>
+                        2. See conversion to your local currency<br>
+                        3. Pay with Flutterwave in your local currency<br>
+                        4. USD balance updates in your wallet
+                    </div>
                 </div>
                 <p style="font-size:0.75rem;color:var(--gray-500);margin-bottom:16px">
-                    ⚠️ Funds deposited here are for purchases only. Not withdrawable.
+                    ⚠️ Funds deposited are for purchases only. Withdrawals via Shoplify Wallet App.
                 </p>
                 <button class="btn btn-primary btn-block" id="process-deposit-btn">
                     💳 Pay with Flutterwave
@@ -627,42 +768,55 @@ class ShoplifyAppClass {
             </div>
         `;
 
-        const { sheet } = Modal.open(content, { title: 'Deposit Funds' });
+        const { sheet } = Modal.open(content, { title: 'Deposit Funds (USD)' });
 
         const amountInput = sheet.querySelector('#deposit-amount');
         const localDisplay = sheet.querySelector('#deposit-local-display');
 
         amountInput.addEventListener('input', () => {
-            const eur = parseFloat(amountInput.value) || 0;
-            localDisplay.textContent = `≈ ${this.formatLocalCurrency(eur)} ${this.state.country?.currency || ''}`;
+            const usd = parseFloat(amountInput.value) || 0;
+            const localAmount = this.convertUSDtoLocal(usd);
+            localDisplay.innerHTML = `
+                ≈ <strong>${this.formatLocalCurrency(usd)}</strong> ${this.state.country?.currency || ''}<br>
+                <small style="color:var(--gray-500)">You will pay in ${this.state.country?.currency || 'local currency'}</small>
+            `;
         });
 
         sheet.querySelector('#process-deposit-btn').addEventListener('click', async () => {
-            const amount = parseFloat(amountInput.value);
+            const usdAmount = parseFloat(amountInput.value);
 
-            if (!amount || amount <= 0) {
+            if (!usdAmount || usdAmount <= 0) {
                 Toast.error('Please enter a valid amount');
                 return;
             }
 
+            // Convert USD to local for Flutterwave
+            const localAmount = this.convertUSDtoLocal(usdAmount);
+
+            Toast.info(`Processing payment of ${this.formatLocalCurrency(usdAmount)}...`);
+
             const result = await FlutterwaveService.initializePayment({
-                amount,
-                currency: 'EUR',
+                amount: localAmount,
+                currency: this.state.country?.currency || 'USD',
                 email: this.state.user.email,
                 name: this.state.user.displayName,
-                description: 'Shoplify Wallet Deposit'
+                description: `Deposit $${usdAmount.toFixed(2)} USD to Shoplify Wallet`
             });
 
             if (result.success) {
+                // Credit wallet with USD amount
                 await Firebase.creditWallet(
                     this.state.user.uid,
-                    amount,
-                    `Deposit via Flutterwave (${result.transactionId})`,
+                    usdAmount,
+                    `Deposit $${usdAmount.toFixed(2)} USD via Flutterwave (${result.transactionId})`,
                     'deposit'
                 );
 
+                await this.refreshBalance();
                 Modal.close();
-                Toast.success(`Deposited €${ComponentFactory.formatNumber(amount)} (${this.formatLocalCurrency(amount)}) successfully!`);
+
+                const newBalance = this.getRealUSDBalance();
+                Toast.success(`Deposited ${this.formatUSD(usdAmount)} successfully! New balance: ${this.formatUSD(newBalance)}`);
                 this.renderWallet();
             } else if (!result.cancelled) {
                 Toast.error(result.error || 'Payment failed');
@@ -671,7 +825,7 @@ class ShoplifyAppClass {
     }
 
     withdrawFunds() {
-        Toast.info('Withdrawals are processed via the Shoplify Wallet App. Please use the separate wallet application.');
+        Toast.info('Withdrawals are processed via the Shoplify Wallet App.');
     }
 
     transferFunds() {
@@ -744,7 +898,8 @@ class ShoplifyAppClass {
         if (!tier) return;
 
         Modal.confirm(
-            `Subscribe to <strong>${tier.emoji} ${tier.name}</strong> plan for <strong>€${tier.priceEUR}/month</strong>?<br><small style="color:var(--gold)">≈ ${this.formatLocalCurrency(tier.priceEUR)}</small><br><br>
+            `Subscribe to <strong>${tier.emoji} ${tier.name}</strong> plan for <strong>$${tier.priceUSD}/month</strong>?<br>
+            ${this.state.country?.currency !== 'USD' ? `<small style="color:var(--gold)">≈ ${this.formatLocalCurrency(tier.priceUSD)} ${this.state.country?.currency}</small><br>` : ''}
             ✓ ${tier.productLimit.toLocaleString()} Products<br>
             ✓ ${tier.commission}% Commission<br>
             ✓ Regions: ${tier.regions.join(', ')}`,
@@ -752,16 +907,17 @@ class ShoplifyAppClass {
             'Cancel'
         ).then(async (confirmed) => {
             if (confirmed) {
-                const balance = this.state.profile?.walletBalance || 0;
+                await this.refreshBalance();
+                const balance = this.getRealUSDBalance();
 
-                if (balance < tier.priceEUR) {
-                    Toast.error(`Insufficient balance. Need €${tier.priceEUR} (${this.formatLocalCurrency(tier.priceEUR)})`);
+                if (balance < tier.priceUSD) {
+                    Toast.error(`Insufficient balance. Need ${this.formatUSD(tier.priceUSD)}`);
                     return;
                 }
 
                 const result = await Firebase.deductFromWallet(
                     this.state.user.uid,
-                    tier.priceEUR,
+                    tier.priceUSD,
                     `Affiliate subscription: ${tier.name}`
                 );
 
@@ -775,12 +931,13 @@ class ShoplifyAppClass {
                     await Firebase.updateSubscription(this.state.user.uid, {
                         type: 'affiliate',
                         tier: tier.id,
-                        price: tier.priceEUR,
+                        price: tier.priceUSD,
                         startDate: new Date().toISOString(),
                         expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
                         status: 'active'
                     });
 
+                    await this.refreshBalance();
                     Toast.success(`Subscribed to ${tier.name} plan!`);
                     ShoplifyFeatures.renderAffiliate();
                 }
@@ -788,14 +945,13 @@ class ShoplifyAppClass {
         });
     }
 
-    filterByCategory(categoryId) {
-        this.navigate('products', categoryId);
+    filterByCategory(catId) {
+        this.navigate('products', catId);
     }
 
-    async generateAffiliateLink(productId) {
+    async generateAffiliateLink(storeId) {
         if (!this.state.user) return null;
-        const baseUrl = 'https://shoplify.netlify.app';
-        return `${baseUrl}?ref=${this.state.user.uid}&product=${productId}`;
+        return `https://${APP_CONFIG.appDomain}/store/${storeId}?ref=${this.state.user.uid}`;
     }
 }
 
@@ -839,4 +995,4 @@ window.handleReportClick = function(productId) {
     ShoplifyFeatures.showReportForm(productId);
 };
 
-console.log('✅ Shoplify Core Loaded - App Instance Ready');
+console.log('✅ Shoplify Core Loaded - Real Balances Only');
