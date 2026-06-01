@@ -2,7 +2,8 @@
  * Shoplify - Enterprise Features Module
  * All Screen Renderers & Feature Logic
  * USD Currency - Real Balances Only
- * Full Multi-Step Store Setup
+ * Full Multi-Step Store Setup + Store Management Dashboard
+ * White/Gold App Theme
  */
 
 class ShoplifyFeatures {
@@ -20,10 +21,10 @@ class ShoplifyFeatures {
 
         if (!app.state.user) {
             container.innerHTML = `
-                <div class="empty-state" style="padding:80px 32px">
+                <div style="text-align:center;padding:80px 32px">
                     <div style="font-size:4rem;margin-bottom:16px">🛍️</div>
-                    <div class="empty-title">Welcome to Shoplify</div>
-                    <div class="empty-text">Build your store. Sell products. Earn money.</div>
+                    <h2 style="color:var(--dark);margin-bottom:8px">Welcome to Shoplify</h2>
+                    <p style="color:var(--gray-500);margin-bottom:24px">Build your store. Sell products. Earn money.</p>
                     <button class="btn btn-primary btn-lg" onclick="ShoplifyApp.showAuth()">Sign In to Start</button>
                 </div>
             `;
@@ -31,50 +32,50 @@ class ShoplifyFeatures {
         }
 
         container.innerHTML = `
-            <div style="padding:20px 16px;text-align:center;background:linear-gradient(135deg, #1A1A1A 0%, #111 100%);border-bottom:1px solid rgba(212,175,55,0.15)">
-                <h1 style="font-size:1.5rem;font-weight:800;margin-bottom:4px">Welcome, ${ComponentFactory.escapeHtml(app.state.user?.displayName || 'User')}</h1>
-                <p style="color:var(--gray-400);font-size:0.875rem">${country?.flag} ${country?.name} · Balance: <strong style="color:var(--gold)">${app.formatUSD(balance)}</strong></p>
+            <div style="padding:20px 16px;text-align:center;background:var(--white);border-bottom:1px solid var(--cream-dark)">
+                <h1 style="font-size:1.5rem;font-weight:800;color:var(--dark);margin-bottom:4px">Welcome, ${ComponentFactory.escapeHtml(app.state.user?.displayName || 'User')}</h1>
+                <p style="color:var(--gray-500);font-size:0.875rem">${country?.flag} ${country?.name} · Balance: <strong style="color:var(--gold-dark)">${app.formatUSD(balance)}</strong></p>
             </div>
 
             ${profile?.isSeller ? `
                 <div style="padding:16px">
-                    <div class="info-card gold-tint" style="cursor:pointer" onclick="ShoplifyApp.navigate('store','${profile.storeId}')">
-                        <div class="info-title">🏪 Your Store</div>
-                        <div class="info-text">Manage products, orders, and view your storefront.<br><span style="color:var(--gold)">${APP_CONFIG.appDomain}/store/${profile.storeId}</span></div>
+                    <div style="background:var(--cream);border:1px solid rgba(212,175,55,0.3);border-radius:12px;padding:16px;cursor:pointer;margin-bottom:12px" onclick="ShoplifyApp.navigate('store-dashboard')">
+                        <div style="font-weight:600;color:var(--dark);margin-bottom:4px">🏪 Your Store Dashboard</div>
+                        <div style="font-size:0.8rem;color:var(--gold-dark)">Manage products, orders, and customize your store</div>
                     </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
-                        <button class="btn btn-primary btn-sm" onclick="ShoplifyApp.navigate('store-setup-products')">📦 Add Products</button>
-                        <button class="btn btn-secondary btn-sm" onclick="ShoplifyApp.navigate('orders')">📋 View Orders</button>
-                        <button class="btn btn-secondary btn-sm" onclick="ShoplifyApp.navigate('store-setup-branding')">🎨 Customize Store</button>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                        <button class="btn btn-primary btn-sm" onclick="ShoplifyApp.navigate('store-add-product')">📦 Add Product</button>
+                        <button class="btn btn-secondary btn-sm" onclick="ShoplifyApp.navigate('store-orders')">📋 Orders</button>
+                        <button class="btn btn-secondary btn-sm" onclick="ShoplifyApp.navigate('store-customize')">🎨 Customize</button>
                         <button class="btn btn-secondary btn-sm" onclick="ShoplifyApp.navigate('analytics')">📊 Analytics</button>
                     </div>
                 </div>
             ` : `
                 <div style="padding:16px;text-align:center">
                     <div style="font-size:4rem;margin-bottom:8px">🏪</div>
-                    <h2>Create Your Store</h2>
-                    <p style="color:var(--gray-400);margin-bottom:16px">Build your online store and start selling</p>
+                    <h2 style="color:var(--dark)">Create Your Store</h2>
+                    <p style="color:var(--gray-500);margin-bottom:16px">Build your online store and start selling</p>
                     <button class="btn btn-primary btn-lg" onclick="window.handleCreateStore()">🏪 Create Your Store - $${APP_CONFIG.storeActivationFeeUSD}</button>
                 </div>
             `}
 
             <div style="padding:0 16px">
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-                    <div class="earnings-card" onclick="ShoplifyApp.navigate('affiliate')" style="cursor:pointer">
-                        <div class="earnings-label">🤝 Affiliate</div>
-                        <div class="earnings-amount affiliate">${profile?.isAffiliate ? 'Active' : 'Join'}</div>
+                    <div style="background:var(--cream);border-radius:12px;padding:16px;cursor:pointer" onclick="ShoplifyApp.navigate('affiliate')">
+                        <div style="font-size:0.75rem;color:var(--gray-500)">🤝 Affiliate</div>
+                        <div style="font-weight:700;color:var(--gold-dark)">${profile?.isAffiliate ? 'Active' : 'Join'}</div>
                     </div>
-                    <div class="earnings-card" onclick="ShoplifyApp.navigate('dropship')" style="cursor:pointer">
-                        <div class="earnings-label">📦 Dropship</div>
-                        <div class="earnings-amount dropship">${profile?.isDropshipper ? 'Active' : 'Start'}</div>
+                    <div style="background:var(--cream);border-radius:12px;padding:16px;cursor:pointer" onclick="ShoplifyApp.navigate('dropship')">
+                        <div style="font-size:0.75rem;color:var(--gray-500)">📦 Dropship</div>
+                        <div style="font-weight:700;color:var(--blue)">${profile?.isDropshipper ? 'Active' : 'Start'}</div>
                     </div>
-                    <div class="earnings-card" onclick="ShoplifyApp.navigate('wallet')" style="cursor:pointer">
-                        <div class="earnings-label">💰 Balance</div>
-                        <div class="earnings-amount">${app.formatUSD(balance)}</div>
+                    <div style="background:var(--cream);border-radius:12px;padding:16px;cursor:pointer" onclick="ShoplifyApp.navigate('wallet')">
+                        <div style="font-size:0.75rem;color:var(--gray-500)">💰 Balance</div>
+                        <div style="font-weight:700;color:var(--dark)">${app.formatUSD(balance)}</div>
                     </div>
-                    <div class="earnings-card" onclick="ShoplifyApp.navigate('orders')" style="cursor:pointer">
-                        <div class="earnings-label">📋 Orders</div>
-                        <div class="earnings-amount sales">${profile?.orderCount || 0}</div>
+                    <div style="background:var(--cream);border-radius:12px;padding:16px;cursor:pointer" onclick="ShoplifyApp.navigate('orders')">
+                        <div style="font-size:0.75rem;color:var(--gray-500)">📋 Orders</div>
+                        <div style="font-weight:700;color:var(--green)">${profile?.orderCount || 0}</div>
                     </div>
                 </div>
                 <button class="btn btn-primary btn-block" onclick="window.handleDepositClick()">💳 Deposit Funds</button>
@@ -91,36 +92,42 @@ class ShoplifyFeatures {
         const app = window.ShoplifyApp || ShoplifyApp;
 
         container.innerHTML = `
-            <div class="back-header"><button class="back-btn" onclick="ShoplifyApp.goBack()">←</button><span class="back-title">Find Stores</span></div>
-            <div class="search-container"><div class="search-bar"><span class="search-icon">🔍</span><input type="text" id="search-input" placeholder="Search stores by name..." autofocus></div></div>
-            <div id="search-results"><div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">Search Stores</div><div class="empty-text">Type a store name to find shops to buy from or promote as an affiliate.</div></div></div>
+            <div style="padding:16px;display:flex;align-items:center;gap:12px">
+                <button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer;font-size:1.1rem" onclick="ShoplifyApp.goBack()">←</button>
+                <span style="font-weight:700;font-size:1.1rem;color:var(--dark)">Explore Stores</span>
+            </div>
+            <div style="padding:0 16px 16px">
+                <div style="display:flex;align-items:center;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:999px;padding:0 8px 0 16px">
+                    <span style="color:var(--gray-400)">🔍</span>
+                    <input type="text" id="search-input" placeholder="Search stores by name..." style="flex:1;background:none;border:none;color:var(--dark);padding:14px 12px;font-size:1rem;outline:none" autofocus>
+                </div>
+            </div>
+            <div id="search-results" style="padding:0 16px">
+                <div style="text-align:center;padding:60px 16px">
+                    <div style="font-size:3rem;margin-bottom:12px;opacity:0.5">🔍</div>
+                    <div style="font-weight:600;color:var(--dark)">Search Stores</div>
+                    <div style="color:var(--gray-500);font-size:0.875rem">Type a store name to find shops.</div>
+                </div>
+            </div>
         `;
 
         const searchInput = document.getElementById('search-input');
         let debounceTimer;
-
         searchInput.addEventListener('input', () => {
             clearTimeout(debounceTimer);
             const term = searchInput.value.trim();
             if (term.length < 2) {
-                DOMHelper.render('search-results', '<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">Search Stores</div><div class="empty-text">Type at least 2 characters.</div></div>');
+                DOMHelper.render('search-results', '<div style="text-align:center;padding:60px"><div style="font-size:3rem">🔍</div><div style="font-weight:600;color:var(--dark)">Search Stores</div><div style="color:var(--gray-500)">Type 2+ characters.</div></div>');
                 return;
             }
-            DOMHelper.render('search-results', SkeletonFactory.productGrid(4));
+            DOMHelper.render('search-results', '<div style="text-align:center;padding:40px"><div class="skeleton" style="height:60px;margin-bottom:8px"></div><div class="skeleton" style="height:60px;margin-bottom:8px"></div></div>');
             debounceTimer = setTimeout(async () => {
-                const snapshot = await Firebase.collections.stores
-                    .where('status', '==', 'active')
-                    .orderBy('name')
-                    .startAt(term)
-                    .endAt(term + '\uf8ff')
-                    .limit(20)
-                    .get();
-                const stores = [];
-                snapshot.forEach(doc => stores.push({ id: doc.id, ...doc.data() }));
+                const snapshot = await Firebase.collections.stores.where('status','==','active').orderBy('name').startAt(term).endAt(term+'\uf8ff').limit(20).get();
+                const stores = []; snapshot.forEach(d => stores.push({id:d.id,...d.data()}));
                 if (stores.length > 0) {
-                    DOMHelper.render('search-results', `<div class="store-scroll" style="flex-wrap:wrap">${stores.map(s => ComponentFactory.storeCard(s)).join('')}</div>`);
+                    DOMHelper.render('search-results', stores.map(s => ComponentFactory.storeCard(s)).join(''));
                 } else {
-                    DOMHelper.render('search-results', ComponentFactory.emptyState('🔍', 'No Stores Found', `No stores matching "${term}".`));
+                    DOMHelper.render('search-results', `<div style="text-align:center;padding:60px"><div style="font-size:3rem">🔍</div><div style="font-weight:600;color:var(--dark)">No Stores Found</div><div style="color:var(--gray-500)">Try a different search.</div></div>`);
                 }
             }, 400);
         });
@@ -133,54 +140,42 @@ class ShoplifyFeatures {
         const container = document.getElementById('screen-product-detail');
         if (!container) return;
         const app = window.ShoplifyApp || ShoplifyApp;
-
-        container.innerHTML = SkeletonFactory.productGrid(1);
-
-        if (!productId) {
-            container.innerHTML = `<div class="back-header"><button class="back-btn" onclick="ShoplifyApp.goBack()">←</button></div>${ComponentFactory.emptyState('📦', 'No Product', 'No product ID.')}`;
-            return;
-        }
-
+        container.innerHTML = '<div style="text-align:center;padding:60px"><div class="skeleton" style="height:300px;margin-bottom:16px"></div><div class="skeleton" style="height:20px;width:60%;margin:8px auto"></div></div>';
+        if (!productId) { container.innerHTML = `<div style="padding:16px"><button onclick="ShoplifyApp.goBack()" style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer">←</button></div><div style="text-align:center;padding:60px"><div style="font-size:3rem">📦</div><div style="font-weight:600;color:var(--dark)">No Product</div></div>`; return; }
         const result = await Firebase.getProductById(productId);
-        if (!result.success) {
-            container.innerHTML = `<div class="back-header"><button class="back-btn" onclick="ShoplifyApp.goBack()">←</button></div>${ComponentFactory.emptyState('📦', 'Not Found', 'This product may have been removed.')}`;
-            return;
-        }
-
+        if (!result.success) { container.innerHTML = `<div style="padding:16px"><button onclick="ShoplifyApp.goBack()" style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer">←</button></div><div style="text-align:center;padding:60px"><div style="font-size:3rem">📦</div><div style="font-weight:600;color:var(--dark)">Not Found</div></div>`; return; }
         const product = result.product;
-        product.isWishlisted = app.isWishlisted(product.id);
         const price = product.salePrice || product.price;
         const hasSale = product.salePrice && product.salePrice < product.price;
-        const discount = hasSale ? Math.round((1 - product.salePrice / product.price) * 100) : 0;
         const imageUrl = product.images?.[0] || product.image || APP_CONFIG.defaultProductImage;
-
         container.innerHTML = `
-            <div class="back-header"><button class="back-btn" onclick="ShoplifyApp.goBack()">←</button><span class="back-title">Product</span></div>
-            <div class="product-gallery"><img src="${imageUrl}" class="gallery-main" onerror="this.src='${APP_CONFIG.defaultProductImage}'"></div>
-            <div class="product-detail-content">
-                <h1 class="product-detail-name">${ComponentFactory.escapeHtml(product.name)}</h1>
-                <div class="product-detail-rating">${ComponentFactory.ratingStars(product.rating || 0, product.reviewCount || 0)}</div>
-                <div class="product-detail-price-row">
-                    <span class="product-detail-price">${app.formatUSD(price)}</span>
-                    ${hasSale ? `<span class="product-detail-original">${app.formatUSD(product.price)}</span><span class="product-detail-discount">-${discount}%</span>` : ''}
+            <div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.goBack()">←</button><span style="font-weight:700;color:var(--dark)">Product</span></div>
+            <div style="width:100%;height:350px;background:var(--gray-100);overflow:hidden"><img src="${imageUrl}" style="width:100%;height:100%;object-fit:cover" onerror="this.src='${APP_CONFIG.defaultProductImage}'"></div>
+            <div style="padding:20px 16px">
+                <h1 style="font-size:1.5rem;font-weight:700;color:var(--dark);margin-bottom:8px">${ComponentFactory.escapeHtml(product.name)}</h1>
+                <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:16px">
+                    <span style="font-size:2rem;font-weight:800;color:var(--gold-dark)">${app.formatUSD(price)}</span>
+                    ${hasSale?`<span style="color:var(--gray-400);text-decoration:line-through">${app.formatUSD(product.price)}</span><span style="background:rgba(239,68,68,0.1);color:var(--red);padding:4px 8px;border-radius:999px;font-size:0.75rem;font-weight:700">-${Math.round((1-product.salePrice/product.price)*100)}%</span>`:''}
                 </div>
-                <div class="product-detail-badges">
-                    ${product.affiliateEnabled ? ComponentFactory.badge('🤝 Affiliate', 'affiliate') : ''}
-                    ${product.dropshipEnabled ? ComponentFactory.badge('📦 Dropship', 'dropship') : ''}
-                    ${(product.stock || 0) > 0 ? '<span class="badge badge-new">In Stock</span>' : '<span class="badge badge-sale">Out of Stock</span>'}
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
+                    ${product.affiliateEnabled?'<span style="background:rgba(212,175,55,0.15);color:var(--gold-dark);padding:4px 10px;border-radius:999px;font-size:0.7rem;font-weight:600">🤝 Affiliate</span>':''}
+                    ${product.dropshipEnabled?'<span style="background:rgba(59,130,246,0.1);color:var(--blue);padding:4px 10px;border-radius:999px;font-size:0.7rem;font-weight:600">📦 Dropship</span>':''}
+                    ${(product.stock||0)>0?'<span style="background:rgba(16,185,129,0.1);color:var(--green);padding:4px 10px;border-radius:999px;font-size:0.7rem;font-weight:600">In Stock</span>':'<span style="background:rgba(239,68,68,0.1);color:var(--red);padding:4px 10px;border-radius:999px;font-size:0.7rem;font-weight:600">Out of Stock</span>'}
                 </div>
-                <div class="product-detail-description">${product.description || 'No description.'}</div>
-                <div class="variant-section"><div class="variant-label">Quantity</div><div class="quantity-selector"><button class="quantity-btn" id="qty-minus">−</button><span class="quantity-value" id="qty-value">1</span><button class="quantity-btn" id="qty-plus">+</button></div></div>
+                <p style="color:var(--gray-600);font-size:0.9rem;line-height:1.7;margin-bottom:20px">${product.description||'No description.'}</p>
+                <div style="margin-bottom:20px"><div style="font-weight:600;color:var(--dark);margin-bottom:8px">Quantity</div><div style="display:flex;align-items:center;border:1px solid var(--gray-200);border-radius:999px;overflow:hidden;width:fit-content"><button style="width:40px;height:40px;background:var(--gray-50);border:none;font-size:1.2rem;cursor:pointer" id="qty-minus">−</button><span style="width:48px;text-align:center;font-weight:600;color:var(--dark)" id="qty-value">1</span><button style="width:40px;height:40px;background:var(--gray-50);border:none;font-size:1.2rem;cursor:pointer" id="qty-plus">+</button></div></div>
             </div>
-            ${product.storeName ? ComponentFactory.infoCard('🏪 Store', `${ComponentFactory.escapeHtml(product.storeName)}<br><button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="ShoplifyApp.navigate('store','${product.storeId}')">Visit Store</button>`, '', false) : ''}
-            <div class="product-actions"><button class="btn btn-secondary" id="add-to-cart-btn">🛒 Add to Cart</button><button class="btn btn-primary" id="buy-now-btn">⚡ Buy Now</button></div>
+            ${product.storeName?`<div style="margin:0 16px 12px;padding:16px;background:var(--cream);border-radius:12px"><div style="font-weight:600;color:var(--dark);margin-bottom:4px">🏪 ${ComponentFactory.escapeHtml(product.storeName)}</div><button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="ShoplifyApp.navigate('store','${product.storeId}')">Visit Store</button></div>`:''}
+            <div style="position:sticky;bottom:calc(64px + env(safe-area-inset-bottom,16px));background:var(--white);padding:12px 16px;border-top:1px solid var(--cream-dark);display:flex;gap:10px">
+                <button class="btn btn-secondary" id="add-to-cart-btn" style="flex:1">🛒 Add to Cart</button>
+                <button class="btn btn-primary" id="buy-now-btn" style="flex:1">⚡ Buy Now</button>
+            </div>
         `;
-
-        let quantity = 1;
-        document.getElementById('qty-minus').addEventListener('click', () => { if (quantity > 1) quantity--; document.getElementById('qty-value').textContent = quantity; });
-        document.getElementById('qty-plus').addEventListener('click', () => { if (quantity < (product.stock || 99)) quantity++; document.getElementById('qty-value').textContent = quantity; });
-        document.getElementById('add-to-cart-btn').addEventListener('click', () => app.addToCart(product, quantity));
-        document.getElementById('buy-now-btn').addEventListener('click', () => { app.addToCart(product, quantity); app.openCart(); });
+        let qty=1;
+        document.getElementById('qty-minus').addEventListener('click',()=>{if(qty>1)qty--;document.getElementById('qty-value').textContent=qty;});
+        document.getElementById('qty-plus').addEventListener('click',()=>{if(qty<(product.stock||99))qty++;document.getElementById('qty-value').textContent=qty;});
+        document.getElementById('add-to-cart-btn').addEventListener('click',()=>app.addToCart(product,qty));
+        document.getElementById('buy-now-btn').addEventListener('click',()=>{app.addToCart(product,qty);app.openCart();});
     }
 
     // ============================================================
@@ -191,15 +186,11 @@ class ShoplifyFeatures {
         if (!container) return;
         const app = window.ShoplifyApp || ShoplifyApp;
         const category = PRODUCT_CATEGORIES.find(c => c.id === categoryId);
-        container.innerHTML = `<div class="back-header"><button class="back-btn" onclick="ShoplifyApp.goBack()">←</button><span class="back-title">${category ? category.name : 'Products'}</span></div><div class="category-scroll">${PRODUCT_CATEGORIES.map(cat => ComponentFactory.categoryChip(cat, cat.id === categoryId)).join('')}</div><div id="products-grid">${SkeletonFactory.productGrid(8)}</div>`;
-        const filters = {}; if (categoryId) filters.category = categoryId;
-        const result = await Firebase.getProducts(filters, 40);
-        if (result.success && result.products.length > 0) {
-            DOMHelper.render('products-grid', `<div class="product-grid">${result.products.map(p => { p.isWishlisted = app.isWishlisted(p.id); return ComponentFactory.productCard(p, '$'); }).join('')}</div>`);
-        } else {
-            DOMHelper.render('products-grid', ComponentFactory.emptyState('📦', 'No Products', 'No products in this category.'));
-        }
-        container.querySelectorAll('.category-chip').forEach(chip => { chip.addEventListener('click', () => ShoplifyFeatures.renderProducts(chip.dataset.category)); });
+        container.innerHTML = `<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.goBack()">←</button><span style="font-weight:700;color:var(--dark)">${category?category.name:'Products'}</span></div><div style="display:flex;gap:8px;padding:0 16px 16px;overflow-x:auto">${PRODUCT_CATEGORIES.map(cat=>`<span style="padding:8px 16px;background:${cat.id===categoryId?'var(--gold)':'var(--gray-100)'};color:${cat.id===categoryId?'var(--white)':'var(--gray-600)'};border-radius:999px;font-size:0.8rem;cursor:pointer;white-space:nowrap" onclick="ShoplifyFeatures.renderProducts('${cat.id}')">${cat.icon} ${cat.name}</span>`).join('')}</div><div id="products-grid" style="padding:0 16px"><div style="text-align:center;padding:40px"><div class="skeleton" style="height:200px;margin-bottom:8px"></div></div></div>`;
+        const filters = {}; if(categoryId) filters.category=categoryId;
+        const result = await Firebase.getProducts(filters,40);
+        if(result.success&&result.products.length>0){DOMHelper.render('products-grid','<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+result.products.map(p=>{p.isWishlisted=app.isWishlisted(p.id);return ComponentFactory.productCard(p,'$');}).join('')+'</div>');}
+        else{DOMHelper.render('products-grid','<div style="text-align:center;padding:60px"><div style="font-size:3rem">📦</div><div style="font-weight:600;color:var(--dark)">No Products</div></div>');}
     }
 
     // ============================================================
@@ -211,24 +202,15 @@ class ShoplifyFeatures {
         const app = window.ShoplifyApp || ShoplifyApp;
         const profile = app.state.profile;
         const currentTier = AFFILIATE_TIERS.find(t => t.id === profile?.affiliateTier) || null;
-
         container.innerHTML = `
-            <div class="back-header"><button class="back-btn" onclick="ShoplifyApp.goBack()">←</button><span class="back-title">Affiliate Center</span></div>
-            ${currentTier ? `
-                <div style="padding:16px;text-align:center">
-                    <span style="font-size:3rem">${currentTier.emoji}</span>
-                    <h2>${currentTier.name} Tier</h2>
-                    <p style="color:var(--gray-400)">${currentTier.commission}% · ${currentTier.productLimit.toLocaleString()} Products · ${currentTier.regions.join(', ')}</p>
-                    <button class="btn btn-primary" style="margin-top:12px" onclick="ShoplifyApp.navigate('affiliate-products')">📦 Promote Stores</button>
-                </div>
-            ` : `<div style="text-align:center;padding:20px"><div style="font-size:3rem">🤝</div><h2>Become an Affiliate</h2><p style="color:var(--gray-400)">Choose a plan and earn commissions promoting stores</p></div>`}
-            <div class="affiliate-stats-row">
-                <div class="affiliate-stat-card"><div class="affiliate-stat-value">${ComponentFactory.formatCount(profile?.affiliateClicks || 0)}</div><div class="affiliate-stat-label">Clicks</div></div>
-                <div class="affiliate-stat-card"><div class="affiliate-stat-value">${ComponentFactory.formatCount(profile?.affiliateConversions || 0)}</div><div class="affiliate-stat-label">Sales</div></div>
-                <div class="affiliate-stat-card"><div class="affiliate-stat-value" style="color:var(--gold)">${app.formatUSD(profile?.affiliateEarnings || 0)}</div><div class="affiliate-stat-label">Earnings</div></div>
+            <div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.goBack()">←</button><span style="font-weight:700;color:var(--dark)">Affiliate Center</span></div>
+            ${currentTier?`<div style="padding:16px;text-align:center"><span style="font-size:3rem">${currentTier.emoji}</span><h2 style="color:var(--dark);margin:8px 0">${currentTier.name} Tier</h2><p style="color:var(--gray-500)">${currentTier.commission}% · ${currentTier.productLimit.toLocaleString()} Products</p><button class="btn btn-primary" style="margin-top:12px" onclick="ShoplifyApp.navigate('affiliate-products')">📦 Promote Stores</button></div>`:'<div style="text-align:center;padding:20px"><div style="font-size:3rem">🤝</div><h2 style="color:var(--dark)">Become an Affiliate</h2></div>'}
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:0 16px 16px">
+                <div style="background:var(--cream);border-radius:12px;padding:14px;text-align:center"><div style="font-weight:700;font-size:1.2rem;color:var(--dark)">${ComponentFactory.formatCount(profile?.affiliateClicks||0)}</div><div style="font-size:0.65rem;color:var(--gray-500)">CLICKS</div></div>
+                <div style="background:var(--cream);border-radius:12px;padding:14px;text-align:center"><div style="font-weight:700;font-size:1.2rem;color:var(--dark)">${ComponentFactory.formatCount(profile?.affiliateConversions||0)}</div><div style="font-size:0.65rem;color:var(--gray-500)">SALES</div></div>
+                <div style="background:var(--cream);border-radius:12px;padding:14px;text-align:center"><div style="font-weight:700;font-size:1.2rem;color:var(--gold-dark)">${app.formatUSD(profile?.affiliateEarnings||0)}</div><div style="font-size:0.65rem;color:var(--gray-500)">EARNINGS</div></div>
             </div>
-            <div class="section-header"><span class="section-title">${currentTier ? 'Change Plan' : 'Choose Plan'}</span></div>
-            ${AFFILIATE_TIERS.map(tier => ComponentFactory.tierCard(tier, profile?.affiliateTier === tier.id, tier.id === 'gold')).join('')}
+            <div style="padding:0 16px"><div style="font-weight:700;color:var(--dark);margin-bottom:12px">${currentTier?'Change Plan':'Choose Plan'}</div>${AFFILIATE_TIERS.map(tier=>ComponentFactory.tierCard(tier,profile?.affiliateTier===tier.id,tier.id==='gold')).join('')}</div>
         `;
     }
 
@@ -240,807 +222,142 @@ class ShoplifyFeatures {
         if (!container) return;
         const app = window.ShoplifyApp || ShoplifyApp;
         const profile = app.state.profile;
-
-        if (!profile?.isAffiliate || !profile?.affiliateTier) {
-            container.innerHTML = `<div class="back-header"><button class="back-btn" onclick="ShoplifyApp.navigate('affiliate')">←</button></div>${ComponentFactory.emptyState('🤝', 'Not an Affiliate', 'Subscribe to promote stores.', 'View Plans', 'ShoplifyApp.navigate("affiliate")')}`;
-            return;
-        }
-
-        const tier = AFFILIATE_TIERS.find(t => t.id === profile.affiliateTier);
-        container.innerHTML = `<div class="back-header"><button class="back-btn" onclick="ShoplifyApp.navigate('affiliate')">←</button><span class="back-title">Promote Stores</span></div><div style="padding:12px 16px;background:rgba(212,175,55,0.08);margin:0 16px 12px;border-radius:12px;font-size:0.8rem;color:var(--gold)">📊 ${tier?.emoji} ${tier?.name} · ${tier?.commission}% commission</div><div id="affiliate-stores-list">${SkeletonFactory.productGrid(4)}</div>`;
-
-        const snapshot = await Firebase.collections.stores.where('status', '==', 'active').limit(50).get();
-        const stores = [];
-        snapshot.forEach(doc => stores.push({ id: doc.id, ...doc.data() }));
-
-        if (stores.length > 0) {
-            let html = '<div style="padding:0 16px;display:flex;flex-direction:column;gap:12px">';
-            stores.forEach(store => {
-                const linkUrl = `https://${APP_CONFIG.appDomain}/store/${store.id}?ref=${app.state.user.uid}`;
-                html += `
-                    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:16px;display:flex;gap:12px;align-items:center">
-                        <img src="${store.logo || 'app-icon.png'}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid var(--gold)" onerror="this.src='app-icon.png'">
-                        <div style="flex:1">
-                            <div style="font-weight:600">${ComponentFactory.escapeHtml(store.name)}</div>
-                            <div style="font-size:0.75rem;color:var(--gray-500)">${ComponentFactory.formatCount(store.followers || 0)} followers</div>
-                            <div style="font-size:0.7rem;color:var(--gold);margin-top:4px">Earn ${APP_CONFIG.baseAffiliateCommission}% per sale</div>
-                        </div>
-                        <div style="display:flex;flex-direction:column;gap:4px">
-                            <button class="btn btn-primary btn-sm" onclick="ShoplifyFeatures.copyAffiliateLink('${linkUrl}')">📋 Copy Link</button>
-                            <button class="btn btn-outline btn-sm" onclick="ShoplifyFeatures.shareAffiliateLink('${store.name}','${linkUrl}')">📤 Share</button>
-                        </div>
-                    </div>
-                `;
-            });
-            html += '</div>';
-            DOMHelper.render('affiliate-stores-list', html);
-        } else {
-            DOMHelper.render('affiliate-stores-list', ComponentFactory.emptyState('🏪', 'No Stores', 'No stores available to promote yet.'));
-        }
+        if(!profile?.isAffiliate){container.innerHTML=`<div style="padding:16px"><button onclick="ShoplifyApp.navigate('affiliate')" style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer">←</button></div><div style="text-align:center;padding:60px"><div style="font-size:3rem">🤝</div><div style="font-weight:600;color:var(--dark)">Not an Affiliate</div></div>`;return;}
+        const tier=AFFILIATE_TIERS.find(t=>t.id===profile.affiliateTier);
+        container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.navigate('affiliate')">←</button><span style="font-weight:700;color:var(--dark)">Promote Stores</span></div><div style="margin:0 16px 12px;padding:12px;background:rgba(212,175,55,0.1);border-radius:12px;font-size:0.8rem;color:var(--gold-dark)">📊 ${tier?.emoji} ${tier?.name} · ${tier?.commission}% commission</div><div id="affiliate-stores-list" style="padding:0 16px"><div style="text-align:center;padding:40px"><div class="skeleton" style="height:60px;margin-bottom:8px"></div></div></div>`;
+        const snapshot=await Firebase.collections.stores.where('status','==','active').limit(50).get();
+        const stores=[];snapshot.forEach(d=>stores.push({id:d.id,...d.data()}));
+        if(stores.length>0){let html='';stores.forEach(store=>{const linkUrl=`https://${APP_CONFIG.appDomain}/store/${store.id}?ref=${app.state.user.uid}`;html+=`<div style="background:var(--white);border:1px solid var(--gray-200);border-radius:12px;padding:16px;display:flex;gap:12px;align-items:center;margin-bottom:8px"><img src="${store.logo||'app-icon.png'}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--gold)" onerror="this.src='app-icon.png'"><div style="flex:1"><div style="font-weight:600;color:var(--dark)">${ComponentFactory.escapeHtml(store.name)}</div><div style="font-size:0.7rem;color:var(--gold-dark);margin-top:2px">Earn ${APP_CONFIG.baseAffiliateCommission}%</div></div><div style="display:flex;flex-direction:column;gap:4px"><button class="btn btn-primary btn-sm" onclick="ShoplifyFeatures.copyAffiliateLink('${linkUrl}')">📋 Copy</button><button class="btn btn-outline btn-sm" onclick="ShoplifyFeatures.shareAffiliateLink('${store.name}','${linkUrl}')">📤 Share</button></div></div>`;});DOMHelper.render('affiliate-stores-list',html);}
+        else{DOMHelper.render('affiliate-stores-list','<div style="text-align:center;padding:60px"><div style="font-size:3rem">🏪</div><div style="font-weight:600;color:var(--dark)">No Stores</div></div>');}
     }
 
-    static async copyAffiliateLink(link) {
-        try { await navigator.clipboard.writeText(link); Toast.success('Affiliate link copied!'); }
-        catch (e) {
-            const input = document.createElement('input'); input.value = link; document.body.appendChild(input); input.select(); document.execCommand('copy'); document.body.removeChild(input);
-            Toast.success('Link copied!');
-        }
-    }
-
-    static shareAffiliateLink(storeName, link) {
-        const text = `🛍️ Shop at ${storeName} on Shoplify!\n${link}`;
-        if (navigator.share) { navigator.share({ title: storeName, text, url: link }).catch(() => {}); }
-        else { ShoplifyFeatures.copyAffiliateLink(link); }
-    }
+    static async copyAffiliateLink(link){try{await navigator.clipboard.writeText(link);Toast.success('Link copied!');}catch(e){const input=document.createElement('input');input.value=link;document.body.appendChild(input);input.select();document.execCommand('copy');document.body.removeChild(input);Toast.success('Link copied!');}}
+    static shareAffiliateLink(storeName,link){const text=`🛍️ Shop at ${storeName} on Shoplify!\n${link}`;if(navigator.share){navigator.share({title:storeName,text,url:link}).catch(()=>{});}else{ShoplifyFeatures.copyAffiliateLink(link);}}
 
     // ============================================================
-    // DROPSHIPPING CENTER
+    // DROPSHIPPING
     // ============================================================
-    static async renderDropship() {
-        const container = document.getElementById('screen-dropship');
-        if (!container) return;
-        const app = window.ShoplifyApp || ShoplifyApp;
-        const profile = app.state.profile;
-
-        container.innerHTML = `
-            <div class="back-header"><button class="back-btn" onclick="ShoplifyApp.goBack()">←</button><span class="back-title">Dropshipping</span></div>
-            <div style="text-align:center;padding:20px"><div style="font-size:3rem">📦</div><h2>Dropshipping Center</h2><p style="color:var(--gray-400)">Import products, set markup, earn profits</p></div>
-            <div style="padding:0 16px">${ComponentFactory.infoCard('💰 How It Works', `1. Subscribe for $${APP_CONFIG.dropshipSubscriptionUSD}/month<br>2. Create your store<br>3. Import products from other sellers<br>4. Set markup up to ${APP_CONFIG.maxDropshipMarkup}%<br>5. Customer buys from your store<br>6. Original seller ships directly`, '', true)}</div>
-            ${!profile?.isDropshipper ? `
-                <div style="padding:16px;text-align:center">
-                    <p style="color:var(--gray-300);margin-bottom:12px">Subscribe for <strong>$${APP_CONFIG.dropshipSubscriptionUSD}/month</strong></p>
-                    <button class="btn btn-primary btn-lg" onclick="window.handleDropshipActivate()">📦 Activate Dropshipping</button>
-                </div>
-            ` : `
-                <div style="padding:16px">
-                    <p style="color:var(--green);text-align:center">✅ Dropshipping Active</p>
-                    ${!profile?.isSeller ? '<button class="btn btn-primary btn-block" onclick="window.handleCreateStore()">🏪 Create Your Store First</button>' : '<button class="btn btn-primary btn-block" onclick="ShoplifyApp.navigate(\'search\')">🔍 Find Products to Import</button>'}
-                </div>
-            `}
-        `;
-    }
-
-    static async activateDropship() {
-        const app = window.ShoplifyApp || ShoplifyApp;
-        const profile = app.state.profile;
-        if (!profile) { Toast.error('Sign in first'); return; }
-        await app.refreshBalance();
-        const balance = app.getRealUSDBalance();
-        if (balance < APP_CONFIG.dropshipSubscriptionUSD) { Toast.error(`Need ${app.formatUSD(APP_CONFIG.dropshipSubscriptionUSD)}`); return; }
-        const confirmed = await Modal.confirm(`Subscribe for <strong>$${APP_CONFIG.dropshipSubscriptionUSD}/month</strong>?`, 'Activate', 'Cancel');
-        if (confirmed) {
-            const result = await Firebase.deductFromWallet(app.state.user.uid, APP_CONFIG.dropshipSubscriptionUSD, 'Dropshipping subscription');
-            if (result.success) {
-                await Firebase.updateUserProfile(app.state.user.uid, { isDropshipper: true, dropshipSubscriptionExpiry: new Date(Date.now() + 2592000000).toISOString() });
-                await app.refreshBalance();
-                Toast.success('Dropshipping activated!');
-                ShoplifyFeatures.renderDropship();
-            }
-        }
-    }
+    static async renderDropship(){const container=document.getElementById('screen-dropship');if(!container)return;const app=window.ShoplifyApp||ShoplifyApp;const profile=app.state.profile;container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.goBack()">←</button><span style="font-weight:700;color:var(--dark)">Dropshipping</span></div><div style="text-align:center;padding:20px"><div style="font-size:3rem">📦</div><h2 style="color:var(--dark)">Dropshipping Center</h2></div><div style="padding:0 16px"><div style="background:var(--cream);border-radius:12px;padding:16px;margin-bottom:16px"><div style="font-weight:600;color:var(--dark);margin-bottom:8px">💰 How It Works</div><div style="font-size:0.8rem;color:var(--gray-600);line-height:1.6">1. Subscribe for $${APP_CONFIG.dropshipSubscriptionUSD}/month<br>2. Create your store<br>3. Import products from other sellers<br>4. Set markup up to ${APP_CONFIG.maxDropshipMarkup}%<br>5. Customer buys from your store<br>6. Original seller ships directly</div></div></div>${!profile?.isDropshipper?`<div style="padding:16px;text-align:center"><p style="color:var(--gray-600);margin-bottom:12px">Subscribe for <strong>$${APP_CONFIG.dropshipSubscriptionUSD}/month</strong></p><button class="btn btn-primary btn-lg" onclick="window.handleDropshipActivate()">📦 Activate Dropshipping</button></div>`:`<div style="padding:16px;text-align:center"><p style="color:var(--green)">✅ Active</p>${!profile?.isSeller?'<button class="btn btn-primary btn-block" onclick="window.handleCreateStore()">🏪 Create Store First</button>':'<button class="btn btn-primary btn-block" onclick="ShoplifyApp.navigate(\'search\')">🔍 Find Products</button>'}</div>`}`;}
+    static async activateDropship(){const app=window.ShoplifyApp||ShoplifyApp;const profile=app.state.profile;if(!profile){Toast.error('Sign in first');return;}await app.refreshBalance();const balance=app.getRealUSDBalance();if(balance<APP_CONFIG.dropshipSubscriptionUSD){Toast.error(`Need ${app.formatUSD(APP_CONFIG.dropshipSubscriptionUSD)}`);return;}const confirmed=await Modal.confirm(`Subscribe for $${APP_CONFIG.dropshipSubscriptionUSD}/month?`,'Activate','Cancel');if(confirmed){const result=await Firebase.deductFromWallet(app.state.user.uid,APP_CONFIG.dropshipSubscriptionUSD,'Dropshipping subscription');if(result.success){await Firebase.updateUserProfile(app.state.user.uid,{isDropshipper:true,dropshipSubscriptionExpiry:new Date(Date.now()+2592000000).toISOString()});await app.refreshBalance();Toast.success('Dropshipping activated!');ShoplifyFeatures.renderDropship();}}}
 
     // ============================================================
-    // WALLET SCREEN
+    // WALLET
     // ============================================================
-    static async renderWallet() {
-        const container = document.getElementById('screen-wallet');
-        if (!container) return;
-        const app = window.ShoplifyApp || ShoplifyApp;
-        const profile = app.state.profile;
-        const country = app.state.country;
-        await app.refreshBalance();
-        const balance = app.getRealUSDBalance();
-
-        container.innerHTML = `
-            <div class="back-header"><button class="back-btn" onclick="ShoplifyApp.goBack()">←</button><span class="back-title">My Wallet</span></div>
-            <div class="wallet-balance-card">
-                <div class="wallet-balance-label">Total Balance (USD)</div>
-                <div class="wallet-balance-amount">${app.formatUSD(balance)}</div>
-                <div class="wallet-balance-currency">${country?.flag} ${country?.currency} · 1 USD ≈ ${app.formatLocalCurrency(1)}</div>
-                <div class="wallet-actions">
-                    <button class="btn btn-primary btn-sm" onclick="window.handleDepositClick()">💳 Deposit</button>
-                    <button class="btn btn-secondary btn-sm" onclick="window.handleWithdrawClick()">🏦 Withdraw</button>
-                </div>
-            </div>
-            <div class="earnings-grid">
-                ${ComponentFactory.earningsCard('Total Earnings', profile?.totalEarnings || 0, '', '$')}
-                ${ComponentFactory.earningsCard('Affiliate', profile?.affiliateEarnings || 0, 'affiliate', '$')}
-                ${ComponentFactory.earningsCard('Dropship', profile?.dropshipEarnings || 0, 'dropship', '$')}
-                ${ComponentFactory.earningsCard('Sales', profile?.salesEarnings || 0, 'sales', '$')}
-            </div>
-            <div class="exchange-rate-card">
-                <span>${country?.flag} ${country?.name}</span>
-                <span class="exchange-rate-value">1 USD = ${app.formatLocalCurrency(1)}</span>
-            </div>
-            <div class="section-header"><span class="section-title">Transactions</span></div>
-            <div class="transaction-list" id="transaction-list">${SkeletonFactory.line()}${SkeletonFactory.line()}${SkeletonFactory.line()}</div>
-        `;
-
-        if (app.state.user) {
-            const result = await Firebase.getTransactionHistory(app.state.user.uid, 20);
-            if (result.success && result.transactions.length > 0) {
-                DOMHelper.render('transaction-list', result.transactions.map(tx => ComponentFactory.transactionItem(tx, '$')).join(''));
-            } else {
-                DOMHelper.render('transaction-list', ComponentFactory.emptyState('💳', 'No Transactions', 'History appears here.'));
-            }
-        }
-    }
+    static async renderWallet(){const container=document.getElementById('screen-wallet');if(!container)return;const app=window.ShoplifyApp||ShoplifyApp;const profile=app.state.profile;const country=app.state.country;await app.refreshBalance();const balance=app.getRealUSDBalance();container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.goBack()">←</button><span style="font-weight:700;color:var(--dark)">My Wallet</span></div><div style="margin:16px;padding:28px 24px;background:linear-gradient(135deg,#1A1A1A 0%,#0D0D0D 100%);border:1px solid rgba(212,175,55,0.25);border-radius:24px;text-align:center"><div style="font-size:0.75rem;color:var(--gray-400);text-transform:uppercase;letter-spacing:2px">Total Balance (USD)</div><div style="font-size:2.5rem;font-weight:900;color:var(--white);margin:8px 0">${app.formatUSD(balance)}</div><div style="color:var(--gold);font-size:0.875rem">${country?.flag} ${country?.currency} · 1 USD ≈ ${app.formatLocalCurrency(1)}</div><div style="display:flex;gap:8px;justify-content:center;margin-top:16px"><button class="btn btn-primary btn-sm" onclick="window.handleDepositClick()">💳 Deposit</button><button class="btn btn-secondary btn-sm" onclick="window.handleWithdrawClick()">🏦 Withdraw</button></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px;margin-bottom:20px"><div style="background:var(--cream);border-radius:12px;padding:16px"><div style="font-size:0.7rem;color:var(--gray-500)">Total Earnings</div><div style="font-weight:700;color:var(--dark)">${app.formatUSD(profile?.totalEarnings||0)}</div></div><div style="background:var(--cream);border-radius:12px;padding:16px"><div style="font-size:0.7rem;color:var(--gray-500)">Affiliate</div><div style="font-weight:700;color:var(--gold-dark)">${app.formatUSD(profile?.affiliateEarnings||0)}</div></div><div style="background:var(--cream);border-radius:12px;padding:16px"><div style="font-size:0.7rem;color:var(--gray-500)">Dropship</div><div style="font-weight:700;color:var(--blue)">${app.formatUSD(profile?.dropshipEarnings||0)}</div></div><div style="background:var(--cream);border-radius:12px;padding:16px"><div style="font-size:0.7rem;color:var(--gray-500)">Sales</div><div style="font-weight:700;color:var(--green)">${app.formatUSD(profile?.salesEarnings||0)}</div></div></div><div style="margin:0 16px 20px;padding:16px;background:var(--cream);border-radius:12px;display:flex;justify-content:space-between;align-items:center"><span style="color:var(--gray-600)">${country?.flag} ${country?.name}</span><span style="font-weight:600;color:var(--gold-dark)">1 USD = ${app.formatLocalCurrency(1)}</span></div><div style="padding:0 16px"><div style="font-weight:700;color:var(--dark);margin-bottom:12px">Transactions</div><div id="transaction-list"><div style="text-align:center;padding:40px"><div class="skeleton" style="height:40px;margin-bottom:8px"></div></div></div></div>`;if(app.state.user){const result=await Firebase.getTransactionHistory(app.state.user.uid,20);if(result.success&&result.transactions.length>0){DOMHelper.render('transaction-list',result.transactions.map(tx=>ComponentFactory.transactionItem(tx,'$')).join(''));}else{DOMHelper.render('transaction-list','<div style="text-align:center;padding:40px"><div style="font-size:2rem">💳</div><div style="color:var(--gray-500)">No transactions yet</div></div>');}}}
 
     // ============================================================
-    // ORDERS SCREEN
+    // ORDERS
     // ============================================================
-    static async renderOrders() {
-        const container = document.getElementById('screen-orders');
-        if (!container) return;
-        const app = window.ShoplifyApp || ShoplifyApp;
-        container.innerHTML = `<div class="back-header"><button class="back-btn" onclick="ShoplifyApp.goBack()">←</button><span class="back-title">My Orders</span></div><div class="order-tabs"><button class="order-tab active" data-status="all">All</button>${Object.entries(ORDER_STATUSES).map(([k,v]) => `<button class="order-tab" data-status="${k}">${v.icon} ${v.label}</button>`).join('')}</div><div id="orders-list">${SkeletonFactory.orderCard()}${SkeletonFactory.orderCard()}</div>`;
-        if (app.state.user) {
-            const result = await Firebase.getUserOrders(app.state.user.uid);
-            if (result.success && result.orders.length > 0) {
-                DOMHelper.render('orders-list', result.orders.map(o => ComponentFactory.orderCard(o, '$')).join(''));
-                container.querySelectorAll('.order-tab').forEach(tab => {
-                    tab.addEventListener('click', () => {
-                        container.querySelectorAll('.order-tab').forEach(t => t.classList.remove('active'));
-                        tab.classList.add('active');
-                        const status = tab.dataset.status;
-                        const filtered = status === 'all' ? result.orders : result.orders.filter(o => o.status === status);
-                        DOMHelper.render('orders-list', filtered.length > 0 ? filtered.map(o => ComponentFactory.orderCard(o, '$')).join('') : ComponentFactory.emptyState('📦', 'No Orders', ''));
-                    });
-                });
-            } else {
-                DOMHelper.render('orders-list', ComponentFactory.emptyState('📦', 'No Orders', 'Your orders appear here.', 'Find Stores', 'ShoplifyApp.navigate("search")'));
-            }
-        }
-    }
+    static async renderOrders(){const container=document.getElementById('screen-orders');if(!container)return;const app=window.ShoplifyApp||ShoplifyApp;container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.goBack()">←</button><span style="font-weight:700;color:var(--dark)">My Orders</span></div><div style="display:flex;gap:4px;padding:0 16px 16px;overflow-x:auto"><button class="order-tab active" data-status="all" style="padding:8px 16px;background:var(--gold);color:var(--white);border:none;border-radius:999px;font-size:0.75rem;cursor:pointer;white-space:nowrap">All</button>${Object.entries(ORDER_STATUSES).map(([k,v])=>`<button class="order-tab" data-status="${k}" style="padding:8px 16px;background:var(--gray-100);color:var(--gray-600);border:none;border-radius:999px;font-size:0.75rem;cursor:pointer;white-space:nowrap">${v.icon} ${v.label}</button>`).join('')}</div><div id="orders-list" style="padding:0 16px"><div style="text-align:center;padding:40px"><div class="skeleton" style="height:80px;margin-bottom:8px"></div></div></div>`;if(app.state.user){const result=await Firebase.getUserOrders(app.state.user.uid);if(result.success&&result.orders.length>0){DOMHelper.render('orders-list',result.orders.map(o=>ComponentFactory.orderCard(o,'$')).join(''));}else{DOMHelper.render('orders-list','<div style="text-align:center;padding:60px"><div style="font-size:3rem">📦</div><div style="font-weight:600;color:var(--dark)">No Orders</div><div style="color:var(--gray-500);font-size:0.875rem">Browse stores to shop.</div></div>');}}}
 
-    static async renderOrderDetail(orderId) {
-        const container = document.getElementById('screen-order-detail');
-        if (!container) return;
-        const app = window.ShoplifyApp || ShoplifyApp;
-        container.innerHTML = `<div class="back-header"><button class="back-btn" onclick="ShoplifyApp.navigate('orders')">←</button></div>${SkeletonFactory.line('100%','200px')}`;
-        const result = await Firebase.getOrderById(orderId);
-        if (!result.success) { container.innerHTML = `<div class="back-header"><button class="back-btn" onclick="ShoplifyApp.navigate('orders')">←</button></div>${ComponentFactory.emptyState('📦','Not Found','')}`; return; }
-        const order = result.order;
-        const steps = [{s:'pending',l:'Placed',i:'✅'},{s:'processing',l:'Processing',i:'🔄'},{s:'shipped',l:'Shipped',i:'🚚'},{s:'delivered',l:'Delivered',i:'✅'}];
-        const currentStep = steps.findIndex(s => s.s === order.status);
-        container.innerHTML = `
-            <div class="back-header"><button class="back-btn" onclick="ShoplifyApp.navigate('orders')">←</button><span class="back-title">#${(order.id||'').substring(0,8).toUpperCase()}</span></div>
-            <div style="padding:16px">
-                <div style="display:flex;justify-content:space-between;margin-bottom:20px"><span style="color:var(--gray-400)">${ComponentFactory.formatDate(order.createdAt)}</span>${ComponentFactory.statusBadge(order.status)}</div>
-                ${order.escrowStatus ? `<div class="info-card gold-tint"><div class="info-title">🔒 Escrow: ${ESCROW_STATUSES[order.escrowStatus]?.label || order.escrowStatus}</div><div class="info-text">Amount: ${app.formatUSD(order.escrowAmount || order.total)}</div></div>` : ''}
-                <div style="padding:16px 0">${steps.map((s,i)=>`<div style="display:flex;gap:12px;margin-bottom:16px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:${i<=currentStep?'var(--gold)':'var(--gray-700)'};color:${i<=currentStep?'var(--black)':'var(--gray-400)'}">${i<=currentStep?'✓':s.i}</div>${i<steps.length-1?`<div style="width:2px;height:20px;background:${i<currentStep?'var(--gold)':'var(--gray-700)'}"></div>`:''}</div><div><div style="font-weight:600">${s.l}</div></div></div>`).join('')}</div>
-            </div>
-            <div style="padding:16px"><h3>Items</h3>${(order.items||[]).map(item=>`<div style="display:flex;gap:12px;padding:12px;background:rgba(255,255,255,0.03);border-radius:12px;margin-bottom:8px"><img src="${item.image||APP_CONFIG.defaultProductImage}" style="width:56px;height:56px;border-radius:8px;object-fit:cover"><div style="flex:1"><div style="font-weight:500">${item.name}</div><div style="color:var(--gray-400);font-size:0.75rem">Qty: ${item.quantity}</div><div style="color:var(--gold);font-weight:600">${app.formatUSD(item.price)}</div></div></div>`).join('')}</div>
-            <div style="padding:16px"><div class="info-card"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span>Subtotal</span><span>${app.formatUSD(order.subtotal||0)}</span></div><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span>Shipping</span><span>${app.formatUSD(order.shipping||0)}</span></div><div style="display:flex;justify-content:space-between;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);font-weight:700;color:var(--gold);font-size:1.1rem"><span>Total</span><span>${app.formatUSD(order.total||0)}</span></div></div></div>
-        `;
-    }
+    static async renderOrderDetail(orderId){const container=document.getElementById('screen-order-detail');if(!container)return;const app=window.ShoplifyApp||ShoplifyApp;container.innerHTML=`<div style="padding:16px"><button onclick="ShoplifyApp.navigate('orders')" style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer">←</button></div><div style="text-align:center;padding:40px"><div class="skeleton" style="height:200px"></div></div>`;const result=await Firebase.getOrderById(orderId);if(!result.success){container.innerHTML=`<div style="padding:16px"><button onclick="ShoplifyApp.navigate('orders')" style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer">←</button></div><div style="text-align:center;padding:60px"><div style="font-size:3rem">📦</div><div style="font-weight:600;color:var(--dark)">Not Found</div></div>`;return;}const order=result.order;const steps=[{s:'pending',l:'Placed',i:'✅'},{s:'processing',l:'Processing',i:'🔄'},{s:'shipped',l:'Shipped',i:'🚚'},{s:'delivered',l:'Delivered',i:'✅'}];const currentStep=steps.findIndex(s=>s.s===order.status);container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.navigate('orders')">←</button><span style="font-weight:700;color:var(--dark)">#${(order.id||'').substring(0,8).toUpperCase()}</span></div><div style="padding:16px"><div style="display:flex;justify-content:space-between;margin-bottom:20px"><span style="color:var(--gray-500);font-size:0.875rem">${ComponentFactory.formatDate(order.createdAt)}</span>${ComponentFactory.statusBadge(order.status)}</div>${order.escrowStatus?`<div style="background:rgba(212,175,55,0.1);border-radius:12px;padding:12px;margin-bottom:16px"><div style="font-weight:600;color:var(--dark)">🔒 Escrow: ${ESCROW_STATUSES[order.escrowStatus]?.label||order.escrowStatus}</div><div style="color:var(--gold-dark);font-weight:600">${app.formatUSD(order.escrowAmount||order.total)}</div></div>`:''}<div style="padding:16px 0">${steps.map((s,i)=>`<div style="display:flex;gap:12px;margin-bottom:16px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:${i<=currentStep?'var(--gold)':'var(--gray-200)'};color:${i<=currentStep?'var(--white)':'var(--gray-400)'}">${i<=currentStep?'✓':s.i}</div>${i<steps.length-1?`<div style="width:2px;height:20px;background:${i<currentStep?'var(--gold)':'var(--gray-200)'}"></div>`:''}</div><div><div style="font-weight:600;color:var(--dark)">${s.l}</div></div></div>`).join('')}</div></div><div style="padding:16px"><div style="font-weight:700;color:var(--dark);margin-bottom:12px">Items</div>${(order.items||[]).map(item=>`<div style="display:flex;gap:12px;padding:12px;background:var(--cream);border-radius:12px;margin-bottom:8px"><img src="${item.image||APP_CONFIG.defaultProductImage}" style="width:56px;height:56px;border-radius:8px;object-fit:cover"><div style="flex:1"><div style="font-weight:500;color:var(--dark)">${item.name}</div><div style="color:var(--gray-500);font-size:0.75rem">Qty: ${item.quantity}</div><div style="color:var(--gold-dark);font-weight:600">${app.formatUSD(item.price)}</div></div></div>`).join('')}</div><div style="padding:16px"><div style="background:var(--cream);border-radius:12px;padding:16px"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--gray-500)">Subtotal</span><span style="color:var(--dark)">${app.formatUSD(order.subtotal||0)}</span></div><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--gray-500)">Shipping</span><span style="color:var(--dark)">${app.formatUSD(order.shipping||0)}</span></div><div style="display:flex;justify-content:space-between;padding-top:12px;border-top:1px solid var(--gray-200);font-weight:700;color:var(--gold-dark);font-size:1.1rem"><span>Total</span><span>${app.formatUSD(order.total||0)}</span></div></div></div>`;}
 
     // ============================================================
-    // PROFILE SCREEN
+    // PROFILE (Full UID, no shortcuts)
     // ============================================================
-    static async renderProfile() {
-        const container = document.getElementById('screen-profile');
-        if (!container) return;
-        const app = window.ShoplifyApp || ShoplifyApp;
-        const profile = app.state.profile;
-        const user = app.state.user;
-        const country = app.state.country;
-        await app.refreshBalance();
-        const balance = app.getRealUSDBalance();
-
-        if (!user) {
-            container.innerHTML = `<div class="empty-state"><div class="empty-icon">👤</div><div class="empty-title">Sign In</div><button class="btn btn-primary" onclick="ShoplifyApp.showAuth()">Sign In</button></div>`;
-            return;
-        }
-
-        const isAdmin = ADMIN_EMAILS.includes(user.email);
-        const photoURL = user.photoURL || profile?.photoURL || 'app-icon.png';
-
-        container.innerHTML = `
-            <div class="profile-header">
-                <div style="position:relative;display:inline-block;cursor:pointer" onclick="ShoplifyApp.uploadProfilePicture()">
-                    <img src="${photoURL}" class="profile-avatar" onerror="this.src='app-icon.png'" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--gold);padding:3px;background:var(--black)">
-                    <div style="position:absolute;bottom:0;right:0;background:var(--gold);color:black;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.8rem;border:2px solid var(--black)">📷</div>
-                </div>
-                <div class="profile-name">${ComponentFactory.escapeHtml(user.displayName || 'User')}</div>
-                <div class="profile-email">${user.email}</div>
-                <div class="profile-country">${country?.flag} ${country?.name}</div>
-                <div style="font-size:0.75rem;color:var(--gray-500);margin-top:4px">UID: ${user.uid.substring(0, 12)}...</div>
-                ${profile?.isSeller ? '<span style="display:inline-block;margin-top:4px;background:rgba(16,185,129,0.15);color:var(--green);padding:4px 12px;border-radius:999px;font-size:0.75rem;font-weight:600">🏪 Seller</span>' : ''}
-                ${profile?.isAffiliate ? `<span style="display:inline-block;margin:4px;background:rgba(212,175,55,0.15);color:var(--gold);padding:4px 12px;border-radius:999px;font-size:0.75rem;font-weight:600">${AFFILIATE_TIERS.find(t=>t.id===profile.affiliateTier)?.emoji||'🤝'} Affiliate</span>` : ''}
-                ${profile?.isDropshipper ? '<span style="display:inline-block;margin:4px;background:rgba(59,130,246,0.15);color:var(--blue);padding:4px 12px;border-radius:999px;font-size:0.75rem;font-weight:600">📦 Dropshipper</span>' : ''}
-            </div>
-            <div class="profile-stats">
-                <div class="profile-stat"><div class="profile-stat-value">${app.formatUSD(balance)}</div><div class="profile-stat-label">Balance</div></div>
-                <div class="profile-stat"><div class="profile-stat-value">${app.formatUSD(profile?.totalEarnings||0)}</div><div class="profile-stat-label">Earnings</div></div>
-                <div class="profile-stat"><div class="profile-stat-value">${profile?.orderCount||0}</div><div class="profile-stat-label">Orders</div></div>
-                <div class="profile-stat"><div class="profile-stat-value">${profile?.reviewCount||0}</div><div class="profile-stat-label">Reviews</div></div>
-            </div>
-            <a href="${APP_CONFIG.whatsappCommunityLink}" target="_blank" style="text-decoration:none"><div class="whatsapp-banner"><span class="whatsapp-icon">💬</span><div class="whatsapp-text"><div class="whatsapp-title">Join WhatsApp Community</div><div class="whatsapp-sub">Get updates and connect</div></div><span>→</span></div></a>
-            <div class="profile-menu">
-                ${ComponentFactory.profileMenuItem('💳', 'Deposit Funds', 'window.handleDepositClick()')}
-                ${ComponentFactory.profileMenuItem('🤝', 'Affiliate Program', 'ShoplifyApp.navigate("affiliate")')}
-                ${ComponentFactory.profileMenuItem('📦', 'Dropshipping', 'ShoplifyApp.navigate("dropship")')}
-                ${!profile?.isSeller ? ComponentFactory.profileMenuItem('🏪', 'Become a Seller', 'window.handleCreateStore()') : ''}
-                ${profile?.isSeller ? ComponentFactory.profileMenuItem('🏪', 'My Store', `ShoplifyApp.navigate('store','${profile.storeId||''}')`) : ''}
-                ${ComponentFactory.profileMenuItem('💰', 'Wallet', 'ShoplifyApp.navigate("wallet")')}
-                ${ComponentFactory.profileMenuItem('📊', 'Analytics', 'ShoplifyApp.navigate("analytics")')}
-                ${ComponentFactory.profileMenuItem('⚙️', 'Settings', 'ShoplifyApp.navigate("settings")')}
-                ${ComponentFactory.profileMenuItem('🆘', 'Help & Support', 'ShoplifyApp.navigate("help")')}
-                ${isAdmin ? ComponentFactory.profileMenuItem('🔧', 'Admin Dashboard', 'ShoplifyApp.navigate("admin")') : ''}
-                ${ComponentFactory.profileMenuItem('🚪', 'Sign Out', 'window.handleSignOut()')}
-            </div>
-        `;
-    }
+    static async renderProfile(){const container=document.getElementById('screen-profile');if(!container)return;const app=window.ShoplifyApp||ShoplifyApp;const profile=app.state.profile;const user=app.state.user;const country=app.state.country;await app.refreshBalance();const balance=app.getRealUSDBalance();if(!user){container.innerHTML=`<div style="text-align:center;padding:80px"><div style="font-size:3rem">👤</div><div style="font-weight:600;color:var(--dark);margin:12px 0">Sign In Required</div><button class="btn btn-primary" onclick="ShoplifyApp.showAuth()">Sign In</button></div>`;return;}const isAdmin=ADMIN_EMAILS.includes(user.email);const photoURL=user.photoURL||profile?.photoURL||'app-icon.png';container.innerHTML=`<div style="padding:24px 16px;text-align:center"><div style="position:relative;display:inline-block;cursor:pointer" onclick="ShoplifyApp.uploadProfilePicture()"><img src="${photoURL}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--gold);padding:3px;background:var(--white)" onerror="this.src='app-icon.png'"><div style="position:absolute;bottom:0;right:0;background:var(--gold);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.8rem;border:2px solid var(--white)">📷</div></div><div style="font-weight:700;font-size:1.2rem;color:var(--dark);margin-top:12px">${ComponentFactory.escapeHtml(user.displayName||'User')}</div><div style="color:var(--gray-500);font-size:0.875rem">${user.email}</div><div style="color:var(--gray-500);font-size:0.75rem;margin-top:4px;word-break:break-all">UID: ${user.uid}</div><div style="color:var(--gray-500);font-size:0.875rem;margin-top:4px">${country?.flag} ${country?.name}</div>${profile?.isSeller?'<span style="display:inline-block;margin-top:8px;background:rgba(16,185,129,0.1);color:var(--green);padding:4px 12px;border-radius:999px;font-size:0.75rem;font-weight:600">🏪 Seller</span>':''}${profile?.isAffiliate?`<span style="display:inline-block;margin:4px;background:rgba(212,175,55,0.1);color:var(--gold-dark);padding:4px 12px;border-radius:999px;font-size:0.75rem;font-weight:600">${AFFILIATE_TIERS.find(t=>t.id===profile.affiliateTier)?.emoji||'🤝'} Affiliate</span>`:''}${profile?.isDropshipper?'<span style="display:inline-block;margin:4px;background:rgba(59,130,246,0.1);color:var(--blue);padding:4px 12px;border-radius:999px;font-size:0.75rem;font-weight:600">📦 Dropshipper</span>':''}</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;padding:0 16px 20px"><div style="background:var(--cream);border-radius:12px;padding:12px 8px;text-align:center"><div style="font-weight:700;color:var(--dark)">${app.formatUSD(balance)}</div><div style="font-size:0.6rem;color:var(--gray-500)">BALANCE</div></div><div style="background:var(--cream);border-radius:12px;padding:12px 8px;text-align:center"><div style="font-weight:700;color:var(--dark)">${app.formatUSD(profile?.totalEarnings||0)}</div><div style="font-size:0.6rem;color:var(--gray-500)">EARNINGS</div></div><div style="background:var(--cream);border-radius:12px;padding:12px 8px;text-align:center"><div style="font-weight:700;color:var(--dark)">${profile?.orderCount||0}</div><div style="font-size:0.6rem;color:var(--gray-500)">ORDERS</div></div><div style="background:var(--cream);border-radius:12px;padding:12px 8px;text-align:center"><div style="font-weight:700;color:var(--dark)">${profile?.reviewCount||0}</div><div style="font-size:0.6rem;color:var(--gray-500)">REVIEWS</div></div></div><a href="${APP_CONFIG.whatsappCommunityLink}" target="_blank" style="text-decoration:none;margin:0 16px;display:block"><div style="padding:16px;background:rgba(37,211,102,0.1);border:1px solid rgba(37,211,102,0.2);border-radius:12px;display:flex;align-items:center;gap:12px"><span style="font-size:2rem">💬</span><div style="flex:1"><div style="font-weight:600;color:var(--dark)">Join WhatsApp Community</div><div style="font-size:0.75rem;color:var(--gray-500)">Get updates, tips, and connect</div></div><span style="color:var(--gray-400)">→</span></div></a><div style="padding:0 16px;margin-top:20px">${ComponentFactory.profileMenuItem('💳','Deposit Funds','window.handleDepositClick()')}${ComponentFactory.profileMenuItem('💰','Wallet','ShoplifyApp.navigate("wallet")')}${ComponentFactory.profileMenuItem('📊','Analytics','ShoplifyApp.navigate("analytics")')}${ComponentFactory.profileMenuItem('⚙️','Settings','ShoplifyApp.navigate("settings")')}${ComponentFactory.profileMenuItem('🆘','Help & Support','ShoplifyApp.navigate("help")')}${isAdmin?ComponentFactory.profileMenuItem('🔧','Admin Dashboard','ShoplifyApp.navigate("admin")'):''}${ComponentFactory.profileMenuItem('🚪','Sign Out','window.handleSignOut()')}</div>`;}
 
     // ============================================================
-    // SETTINGS
+    // SETTINGS (Functional)
     // ============================================================
-    static renderSettings() {
-        const container = document.getElementById('screen-settings');
-        if (!container) return;
-        const app = window.ShoplifyApp || ShoplifyApp;
-        const user = app.state.user;
-        container.innerHTML = `
-            <div class="back-header"><button class="back-btn" onclick="ShoplifyApp.goBack()">←</button><span class="back-title">Settings</span></div>
-            <div class="profile-menu">
-                ${ComponentFactory.profileMenuItem('👤', 'Account Settings', 'Toast.info("Coming soon")')}
-                ${ComponentFactory.profileMenuItem('🔔', 'Notifications', 'Toast.info("Coming soon")')}
-                ${ComponentFactory.profileMenuItem('🔒', 'Privacy', 'Toast.info("Coming soon")')}
-                ${ComponentFactory.profileMenuItem('🌍', 'Region: ' + (app.state.country?.name||'US'), 'Toast.info("Auto-detected")')}
-            </div>
-            <div style="text-align:center;padding:20px;color:var(--gray-500);font-size:0.875rem">Shoplify v${APP_CONFIG.version}<br>${user?.uid||'N/A'}<br>${APP_CONFIG.appDomain}</div>
-        `;
-    }
+    static renderSettings(){const container=document.getElementById('screen-settings');if(!container)return;const app=window.ShoplifyApp||ShoplifyApp;const user=app.state.user;container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.goBack()">←</button><span style="font-weight:700;color:var(--dark)">Settings</span></div><div style="padding:0 16px">${ComponentFactory.profileMenuItem('👤','Account Settings','ShoplifyFeatures.openAccountSettings()')}${ComponentFactory.profileMenuItem('🔔','Notification Preferences','ShoplifyFeatures.openNotificationSettings()')}${ComponentFactory.profileMenuItem('🔒','Privacy & Security','Toast.info("Privacy settings coming soon")')}${ComponentFactory.profileMenuItem('🌍','Country: '+(app.state.country?.name||'US'),'Toast.info("Auto-detected from your location")')}${ComponentFactory.profileMenuItem('💾','Clear Cache','ShoplifyFeatures.clearCache()')}${ComponentFactory.profileMenuItem('📱','App Version','',false)}</div><div style="text-align:center;padding:20px;color:var(--gray-500);font-size:0.875rem">Shoplify v${APP_CONFIG.version}<br>${APP_CONFIG.appDomain}<br>UID: ${user?.uid||'N/A'}</div>`;}
+
+    static openAccountSettings(){const app=window.ShoplifyApp||ShoplifyApp;const content=`<div class="form-group"><label class="form-label" style="color:var(--dark)">Display Name</label><input type="text" class="form-input" id="settings-name" value="${ComponentFactory.escapeHtml(app.state.user?.displayName||'')}" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Email</label><input type="email" class="form-input" value="${app.state.user?.email||''}" disabled style="background:var(--gray-100);color:var(--gray-500)"></div><button class="btn btn-primary btn-block" id="save-account-btn">Save Changes</button>`;const{sheet}=Modal.open(content,{title:'Account Settings'});sheet.querySelector('#save-account-btn').addEventListener('click',async()=>{const name=sheet.querySelector('#settings-name').value.trim();if(!name){Toast.error('Name required');return;}const user=Firebase.getCurrentUser();if(user)await user.updateProfile({displayName:name});await Firebase.updateUserProfile(app.state.user.uid,{displayName:name});app.state.user.displayName=name;Modal.close();Toast.success('Account updated!');ShoplifyFeatures.renderProfile();});}
+
+    static openNotificationSettings(){const app=window.ShoplifyApp||ShoplifyApp;const prefs=app.state.profile?.notificationPreferences||{};const content=`<div style="display:flex;flex-direction:column;gap:12px"><label style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--cream);border-radius:8px"><span style="color:var(--dark)">Email Notifications</span><input type="checkbox" id="notif-email" ${prefs.email!==false?'checked':''}></label><label style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--cream);border-radius:8px"><span style="color:var(--dark)">Push Notifications</span><input type="checkbox" id="notif-push" ${prefs.push!==false?'checked':''}></label><label style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--cream);border-radius:8px"><span style="color:var(--dark)">Order Updates</span><input type="checkbox" id="notif-orders" ${prefs.orders!==false?'checked':''}></label><label style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--cream);border-radius:8px"><span style="color:var(--dark)">Promotions</span><input type="checkbox" id="notif-promo" ${prefs.promotions!==false?'checked':''}></label><button class="btn btn-primary btn-block" id="save-notif-btn">Save</button></div>`;const{sheet}=Modal.open(content,{title:'Notifications'});sheet.querySelector('#save-notif-btn').addEventListener('click',async()=>{const prefs={email:sheet.querySelector('#notif-email').checked,push:sheet.querySelector('#notif-push').checked,orders:sheet.querySelector('#notif-orders').checked,promotions:sheet.querySelector('#notif-promo').checked};await Firebase.updateUserProfile(app.state.user.uid,{notificationPreferences:prefs});if(app.state.profile)app.state.profile.notificationPreferences=prefs;Modal.close();Toast.success('Notification preferences saved!');});}
+
+    static clearCache(){localStorage.removeItem('shoplify_cart');localStorage.removeItem('shoplify_wishlist');localStorage.removeItem('shoplify_country');localStorage.removeItem('shoplify_rates');localStorage.removeItem('shoplify_deposit_warning_seen');localStorage.removeItem('shoplify_store_setup');Toast.success('Cache cleared!');}
 
     // ============================================================
     // STORE SCREEN (Public Storefront)
     // ============================================================
-    static async renderStore(storeId) {
-        const container = document.getElementById('screen-store');
-        if (!container) return;
-        const app = window.ShoplifyApp || ShoplifyApp;
-        if (!storeId) { container.innerHTML = `<div class="back-header"><button class="back-btn" onclick="ShoplifyApp.goBack()">←</button></div>${ComponentFactory.emptyState('🏪','No Store ID')}`; return; }
-        try {
-            const doc = await Firebase.collections.stores.doc(storeId).get();
-            if (!doc.exists) { container.innerHTML = `<div class="back-header"><button class="back-btn" onclick="ShoplifyApp.goBack()">←</button></div>${ComponentFactory.emptyState('🏪','Store Not Found')}`; return; }
-            const store = { id: doc.id, ...doc.data() };
-            const snap = await Firebase.collections.products.where('storeId','==',storeId).where('status','==','active').limit(20).get();
-            const products = []; snap.forEach(d => products.push({ id: d.id, ...d.data() }));
-            container.innerHTML = `
-                <div class="back-header"><button class="back-btn" onclick="ShoplifyApp.goBack()">←</button><span class="back-title">${ComponentFactory.escapeHtml(store.name||'Store')}</span></div>
-                <div style="text-align:center;padding:20px">
-                    <img src="${store.logo||'app-icon.png'}" style="width:80px;height:80px;border-radius:50%;border:3px solid var(--gold);object-fit:cover" onerror="this.src='app-icon.png'">
-                    <h2>${ComponentFactory.escapeHtml(store.name||'Store')}</h2>
-                    ${store.verified?'<span style="color:var(--gold)">✓ Verified</span>':''}
-                    <p style="color:var(--gray-400);margin-top:8px">${ComponentFactory.escapeHtml(store.description||'')}</p>
-                    <div style="font-size:0.75rem;color:var(--gold);margin-top:4px">🔗 ${APP_CONFIG.appDomain}/store/${store.id}</div>
-                    <div style="display:flex;justify-content:center;gap:24px;margin-top:16px">
-                        <div style="text-align:center"><strong>${products.length}</strong><br><span style="font-size:0.75rem;color:var(--gray-500)">Products</span></div>
-                        <div style="text-align:center"><strong>${ComponentFactory.formatCount(store.followers||0)}</strong><br><span style="font-size:0.75rem;color:var(--gray-500)">Followers</span></div>
-                    </div>
-                </div>
-                <div class="section-header"><span class="section-title">Products</span></div>
-                ${products.length>0?`<div class="product-grid">${products.map(p=>{p.isWishlisted=app.isWishlisted(p.id);return ComponentFactory.productCard(p,'$');}).join('')}</div>`:ComponentFactory.emptyState('📦','No Products','')}
-            `;
-        } catch(e) { container.innerHTML = `<div class="back-header"><button class="back-btn" onclick="ShoplifyApp.goBack()">←</button></div>${ComponentFactory.emptyState('🏪','Error','')}`; }
-    }
+    static async renderStore(storeId){const container=document.getElementById('screen-store');if(!container)return;const app=window.ShoplifyApp||ShoplifyApp;if(!storeId){container.innerHTML=`<div style="padding:16px"><button onclick="ShoplifyApp.goBack()">←</button></div><div style="text-align:center;padding:60px"><div style="font-size:3rem">🏪</div><div style="font-weight:600;color:var(--dark)">No Store ID</div></div>`;return;}try{const doc=await Firebase.collections.stores.doc(storeId).get();if(!doc.exists){container.innerHTML=`<div style="padding:16px"><button onclick="ShoplifyApp.goBack()">←</button></div><div style="text-align:center;padding:60px"><div style="font-size:3rem">🏪</div><div style="font-weight:600;color:var(--dark)">Store Not Found</div></div>`;return;}const store={id:doc.id,...doc.data()};const snap=await Firebase.collections.products.where('storeId','==',storeId).where('status','==','active').limit(20).get();const products=[];snap.forEach(d=>products.push({id:d.id,...d.data()}));container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.goBack()">←</button><span style="font-weight:700;color:var(--dark)">${ComponentFactory.escapeHtml(store.name||'Store')}</span></div><div style="text-align:center;padding:20px"><img src="${store.logo||'app-icon.png'}" style="width:80px;height:80px;border-radius:50%;border:3px solid var(--gold);object-fit:cover" onerror="this.src='app-icon.png'"><h2 style="color:var(--dark);margin-top:12px">${ComponentFactory.escapeHtml(store.name||'Store')}</h2>${store.verified?'<span style="color:var(--gold-dark)">✓ Verified</span>':''}<p style="color:var(--gray-500);margin-top:8px">${ComponentFactory.escapeHtml(store.description||'')}</p><div style="font-size:0.75rem;color:var(--gold-dark);margin-top:4px">🔗 ${APP_CONFIG.appDomain}/store/${store.id}</div><div style="display:flex;justify-content:center;gap:24px;margin-top:16px"><div style="text-align:center"><strong style="color:var(--dark)">${products.length}</strong><br><span style="font-size:0.75rem;color:var(--gray-500)">Products</span></div><div style="text-align:center"><strong style="color:var(--dark)">${ComponentFactory.formatCount(store.followers||0)}</strong><br><span style="font-size:0.75rem;color:var(--gray-500)">Followers</span></div></div></div><div style="padding:0 16px"><div style="font-weight:700;color:var(--dark);margin-bottom:12px">Products</div>${products.length>0?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">${products.map(p=>{p.isWishlisted=app.isWishlisted(p.id);return ComponentFactory.productCard(p,'$');}).join('')}</div>`:'<div style="text-align:center;padding:40px"><div style="font-size:2rem">📦</div><div style="color:var(--gray-500)">No products yet</div></div>'}</div>`;}catch(e){container.innerHTML=`<div style="padding:16px"><button onclick="ShoplifyApp.goBack()">←</button></div><div style="text-align:center;padding:60px"><div style="font-size:3rem">🏪</div><div style="font-weight:600;color:var(--dark)">Error</div></div>`;}}
 
     // ============================================================
-    // SELLER DASHBOARD
+    // STORE DASHBOARD (Main Store Management)
     // ============================================================
-    static renderSellerDashboard() {
-        const container = document.getElementById('screen-seller-dashboard');
-        if (!container) return;
-        container.innerHTML = `
-            <div class="back-header"><button class="back-btn" onclick="ShoplifyApp.goBack()">←</button><span class="back-title">Seller Dashboard</span></div>
-            <div style="text-align:center;padding:40px 20px"><div style="font-size:4rem">🏪</div><h2>Become a Seller</h2><p style="color:var(--gray-400);margin-bottom:20px">One-time fee: <strong>$${APP_CONFIG.storeActivationFeeUSD}</strong></p><button class="btn btn-primary btn-lg" onclick="window.handleCreateStore()">🏪 Create Your Store</button></div>
-        `;
-    }
+    static async renderStoreDashboard(){const container=document.getElementById('screen-store-dashboard');if(!container)return;const app=window.ShoplifyApp||ShoplifyApp;const profile=app.state.profile;if(!profile?.isSeller){container.innerHTML=`<div style="padding:16px"><button onclick="ShoplifyApp.goBack()">←</button></div><div style="text-align:center;padding:60px"><div style="font-size:3rem">🏪</div><div style="font-weight:600;color:var(--dark)">No Store Yet</div><button class="btn btn-primary" style="margin-top:16px" onclick="window.handleCreateStore()">Create Store</button></div>`;return;}try{const doc=await Firebase.collections.stores.doc(profile.storeId).get();if(!doc.exists){container.innerHTML=`<div style="padding:16px"><button onclick="ShoplifyApp.goBack()">←</button></div><div style="text-align:center;padding:60px"><div style="font-size:3rem">🏪</div><div style="font-weight:600;color:var(--dark)">Store Not Found</div></div>`;return;}const store={id:doc.id,...doc.data()};const ordersSnap=await Firebase.collections.orders.where('items.storeId','array-contains',store.id).count().get();const productsSnap=await Firebase.collections.products.where('storeId','==',store.id).count().get();container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.goBack()">←</button><span style="font-weight:700;color:var(--dark)">Store Dashboard</span></div><div style="padding:16px;text-align:center"><img src="${store.logo||'app-icon.png'}" style="width:60px;height:60px;border-radius:50%;border:2px solid var(--gold);object-fit:cover" onerror="this.src='app-icon.png'"><h2 style="color:var(--dark);margin-top:8px">${ComponentFactory.escapeHtml(store.name)}</h2><div style="color:var(--gold-dark);font-size:0.8rem">🔗 ${APP_CONFIG.appDomain}/store/${store.id}</div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px;margin-bottom:16px"><div style="background:var(--cream);border-radius:12px;padding:16px"><div style="font-size:0.7rem;color:var(--gray-500)">PRODUCTS</div><div style="font-weight:700;font-size:1.5rem;color:var(--dark)">${productsSnap.data?.count||0}</div></div><div style="background:var(--cream);border-radius:12px;padding:16px"><div style="font-size:0.7rem;color:var(--gray-500)">ORDERS</div><div style="font-weight:700;font-size:1.5rem;color:var(--dark)">${ordersSnap.data?.count||0}</div></div><div style="background:var(--cream);border-radius:12px;padding:16px"><div style="font-size:0.7rem;color:var(--gray-500)">FOLLOWERS</div><div style="font-weight:700;font-size:1.5rem;color:var(--dark)">${ComponentFactory.formatCount(store.followers||0)}</div></div><div style="background:var(--cream);border-radius:12px;padding:16px"><div style="font-size:0.7rem;color:var(--gray-500)">STATUS</div><div style="font-weight:700;font-size:1.2rem;color:var(--green)">Active</div></div></div><div style="padding:0 16px"><div style="font-weight:700;color:var(--dark);margin-bottom:12px">Quick Actions</div>${ComponentFactory.profileMenuItem('📦','Add Product','ShoplifyApp.navigate("store-add-product")')}${ComponentFactory.profileMenuItem('📋','View Orders','ShoplifyApp.navigate("store-orders")')}${ComponentFactory.profileMenuItem('🎨','Customize Store','ShoplifyApp.navigate("store-customize")')}${ComponentFactory.profileMenuItem('📂','Collections','ShoplifyApp.navigate("store-collections")')}${ComponentFactory.profileMenuItem('👥','Customers','ShoplifyApp.navigate("store-customers")')}${ComponentFactory.profileMenuItem('📢','Marketing','ShoplifyApp.navigate("store-marketing")')}${ComponentFactory.profileMenuItem('⚙️','Store Settings','ShoplifyApp.navigate("store-settings")')}${ComponentFactory.profileMenuItem('🔗','View Store','ShoplifyApp.navigate("store","'+store.id+'")')}</div>`;}catch(e){container.innerHTML=`<div style="padding:16px"><button onclick="ShoplifyApp.goBack()">←</button></div><div style="text-align:center;padding:60px"><div style="font-size:3rem">⚠️</div><div style="font-weight:600;color:var(--dark)">Error loading dashboard</div></div>`;}}
 
     // ============================================================
-    // STORE SETUP - STEP 1: Basic Info
+    // STORE CUSTOMIZE
     // ============================================================
-    static renderStoreSetup() {
-        const container = document.getElementById('screen-store-setup');
-        if (!container) return;
-        const app = window.ShoplifyApp || ShoplifyApp;
-        container.innerHTML = `
-            <div class="back-header"><button class="back-btn" onclick="ShoplifyApp.goBack()">←</button><span class="back-title">Store Setup (1/7)</span></div>
-            <div style="padding:16px">
-                <div style="display:flex;gap:4px;margin-bottom:20px;overflow-x:auto">${[1,2,3,4,5,6,7].map(i=>`<div style="min-width:30px;height:4px;border-radius:2px;background:${i===1?'var(--gold)':'var(--gray-700)'}"></div>`).join('')}</div>
-                <div class="form-group"><label class="form-label">Store Name *</label><input type="text" class="form-input" id="store-name" placeholder="My Store"></div>
-                <div class="form-group"><label class="form-label">Legal Business Name</label><input type="text" class="form-input" id="store-legal-name" placeholder="Optional"></div>
-                <div class="form-group"><label class="form-label">Contact Email *</label><input type="email" class="form-input" id="store-email" value="${app.state.user?.email||''}"></div>
-                <div class="form-group"><label class="form-label">Support Email</label><input type="email" class="form-input" id="store-support-email" placeholder="support@store.com"></div>
-                <div class="form-group"><label class="form-label">Business Address</label><textarea class="form-input form-textarea" id="store-address" rows="2" placeholder="Your address"></textarea></div>
-                <div class="form-group"><label class="form-label">Store Description</label><textarea class="form-input form-textarea" id="store-description" rows="3" placeholder="Describe your store"></textarea></div>
-                <div class="form-group"><label class="form-label">Logo URL</label><input type="url" class="form-input" id="store-logo" placeholder="https://...logo.png"><p style="font-size:0.7rem;color:var(--gray-500);margin-top:4px">Upload to Cloudinary first</p></div>
-                <div class="form-group"><label class="form-label">Currency</label><select class="form-input form-select" id="store-currency"><option value="USD">USD ($)</option><option value="EUR">EUR (€)</option><option value="GBP">GBP (£)</option><option value="NGN">NGN (₦)</option></select></div>
-                <div class="form-group"><label class="form-label">Time Zone</label><select class="form-input form-select" id="store-timezone"><option value="UTC">UTC</option><option value="WAT">West Africa (WAT)</option><option value="GMT">London (GMT)</option><option value="CET">Europe (CET)</option><option value="EST">US Eastern</option><option value="PST">US Pacific</option></select></div>
-                <p style="font-size:0.75rem;color:var(--gray-500);margin-bottom:16px">Fee: <strong>$${APP_CONFIG.storeActivationFeeUSD}</strong></p>
-                <button class="btn btn-primary btn-block" id="save-step1-btn">Save & Continue →</button>
-            </div>
-        `;
-        document.getElementById('save-step1-btn').addEventListener('click', async () => {
-            const name = document.getElementById('store-name').value.trim();
-            if (!name) { Toast.error('Store name required'); return; }
-            localStorage.setItem('shoplify_store_setup', JSON.stringify({
-                name, legalName: document.getElementById('store-legal-name').value.trim(),
-                email: document.getElementById('store-email').value.trim(),
-                supportEmail: document.getElementById('store-support-email').value.trim(),
-                address: document.getElementById('store-address').value.trim(),
-                description: document.getElementById('store-description').value.trim(),
-                logo: document.getElementById('store-logo').value.trim(),
-                currency: document.getElementById('store-currency').value,
-                timezone: document.getElementById('store-timezone').value
-            }));
-            ShoplifyApp.navigate('store-setup-branding');
-        });
-    }
+    static async renderStoreCustomize(){const container=document.getElementById('screen-store-customize');if(!container)return;const app=window.ShoplifyApp||ShoplifyApp;const profile=app.state.profile;if(!profile?.storeId){container.innerHTML=`<div style="padding:16px"><button onclick="ShoplifyApp.navigate('store-dashboard')">←</button></div><div style="text-align:center;padding:60px"><div style="font-size:3rem">🏪</div><div style="font-weight:600;color:var(--dark)">No Store</div></div>`;return;}const doc=await Firebase.collections.stores.doc(profile.storeId).get();const store=doc.exists?{id:doc.id,...doc.data()}:{};container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.navigate('store-dashboard')">←</button><span style="font-weight:700;color:var(--dark)">Customize Store</span></div><div style="padding:16px"><div class="form-group"><label class="form-label" style="color:var(--dark)">Banner Image URL</label><input type="url" class="form-input" id="customize-banner" value="${store.banner||''}" placeholder="https://...banner.jpg" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Primary Color</label><input type="color" class="form-input" id="customize-color" value="${store.color||'#D4AF37'}" style="height:50px;padding:4px"></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Font</label><select class="form-input" id="customize-font" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"><option value="Inter" ${store.font==='Inter'?'selected':''}>Inter (Modern)</option><option value="serif" ${store.font==='serif'?'selected':''}>Serif (Classic)</option><option value="mono" ${store.font==='mono'?'selected':''}>Mono (Clean)</option></select></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Store Description</label><textarea class="form-input" id="customize-desc" rows="3" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)">${store.description||''}</textarea></div><button class="btn btn-primary btn-block" id="save-customize-btn">Save Changes</button></div>`;document.getElementById('save-customize-btn').addEventListener('click',async()=>{await Firebase.collections.stores.doc(profile.storeId).update({banner:document.getElementById('customize-banner').value.trim(),color:document.getElementById('customize-color').value,font:document.getElementById('customize-font').value,description:document.getElementById('customize-desc').value.trim()});Toast.success('Store updated!');});}
 
     // ============================================================
-    // STORE SETUP - STEP 2: Branding
+    // STORE ADD PRODUCT
     // ============================================================
-    static renderStoreSetupBranding() {
-        const container = document.getElementById('screen-store-setup');
-        if (!container) return;
-        const saved = JSON.parse(localStorage.getItem('shoplify_store_setup') || '{}');
-        container.innerHTML = `
-            <div class="back-header"><button class="back-btn" onclick="ShoplifyApp.navigate('store-setup')">←</button><span class="back-title">Branding (2/7)</span></div>
-            <div style="padding:16px">
-                <div style="display:flex;gap:4px;margin-bottom:20px">${[1,2,3,4,5,6,7].map(i=>`<div style="min-width:30px;height:4px;border-radius:2px;background:${i<=2?'var(--gold)':'var(--gray-700)'}"></div>`).join('')}</div>
-                <div class="form-group"><label class="form-label">Banner Image URL</label><input type="url" class="form-input" id="store-banner" placeholder="https://...banner.jpg"></div>
-                <div class="form-group"><label class="form-label">Primary Color</label><input type="color" class="form-input" id="store-color" value="#D4AF37" style="height:50px;padding:4px"></div>
-                <div class="form-group"><label class="form-label">Font Style</label><select class="form-input form-select" id="store-font"><option value="Inter">Inter (Modern)</option><option value="serif">Serif (Classic)</option><option value="mono">Mono (Clean)</option></select></div>
-                <div class="form-group"><label class="form-label">Featured Collections (comma separated)</label><input type="text" class="form-input" id="store-collections" placeholder="New Arrivals, Best Sellers, Sale"></div>
-                <button class="btn btn-primary btn-block" id="save-step2-btn">Save & Continue →</button>
-            </div>
-        `;
-        document.getElementById('save-step2-btn').addEventListener('click', () => {
-            saved.banner = document.getElementById('store-banner').value.trim();
-            saved.color = document.getElementById('store-color').value;
-            saved.font = document.getElementById('store-font').value;
-            saved.collections = document.getElementById('store-collections').value.trim();
-            localStorage.setItem('shoplify_store_setup', JSON.stringify(saved));
-            ShoplifyApp.navigate('store-setup-policies');
-        });
-    }
+    static renderStoreAddProduct(){const container=document.getElementById('screen-store-add-product');if(!container)return;const app=window.ShoplifyApp||ShoplifyApp;container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.navigate('store-dashboard')">←</button><span style="font-weight:700;color:var(--dark)">Add Product</span></div><div style="padding:16px"><div class="form-group"><label class="form-label" style="color:var(--dark)">Product Name *</label><input type="text" class="form-input" id="ap-name" placeholder="Product name" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Price (USD) *</label><input type="number" class="form-input" id="ap-price" placeholder="29.99" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Compare-at Price (USD)</label><input type="number" class="form-input" id="ap-compare-price" placeholder="39.99" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Category</label><select class="form-input" id="ap-category" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)">${PRODUCT_CATEGORIES.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Description</label><textarea class="form-input" id="ap-desc" rows="4" placeholder="Describe your product..." style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></textarea></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Image URL</label><input type="url" class="form-input" id="ap-image" placeholder="https://...image.jpg" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></div><div class="form-group"><label class="form-label" style="color:var(--dark)">SKU</label><input type="text" class="form-input" id="ap-sku" placeholder="SKU-001" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Stock Quantity</label><input type="number" class="form-input" id="ap-stock" value="100" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></div><div class="form-group"><label style="display:flex;align-items:center;gap:8px;color:var(--dark)"><input type="checkbox" id="ap-affiliate" checked> Enable Affiliate</label></div><div class="form-group"><label style="display:flex;align-items:center;gap:8px;color:var(--dark)"><input type="checkbox" id="ap-dropship" checked> Enable Dropship</label></div><button class="btn btn-primary btn-block" id="save-product-btn">💾 Save Product</button></div>`;document.getElementById('save-product-btn').addEventListener('click',async()=>{const name=document.getElementById('ap-name').value.trim();const price=parseFloat(document.getElementById('ap-price').value);if(!name||!price){Toast.error('Name and price required');return;}const profile=app.state.profile;if(!profile?.storeId){Toast.error('Create a store first');return;}const storeDoc=await Firebase.collections.stores.doc(profile.storeId).get();const storeName=storeDoc.exists?storeDoc.data().name:'Store';const comparePrice=parseFloat(document.getElementById('ap-compare-price').value)||null;const productData={storeId:profile.storeId,storeName:storeName,name:name,price:price,salePrice:comparePrice&&comparePrice>price?price:null,description:document.getElementById('ap-desc').value.trim(),images:document.getElementById('ap-image').value?[document.getElementById('ap-image').value.trim()]:[],category:document.getElementById('ap-category').value,sku:document.getElementById('ap-sku').value.trim(),stock:parseInt(document.getElementById('ap-stock').value)||100,affiliateEnabled:document.getElementById('ap-affiliate').checked,dropshipEnabled:document.getElementById('ap-dropship').checked,status:'active',searchKeywords:name.toLowerCase().split(' '),availableCountries:['US','GB','NG','CA'],createdAt:firebase.firestore.FieldValue.serverTimestamp()};const result=await Firebase.createProduct(productData);if(result.success){Toast.success('Product added!');document.getElementById('ap-name').value='';document.getElementById('ap-price').value='';document.getElementById('ap-desc').value='';document.getElementById('ap-image').value='';}else{Toast.error('Failed to save product');}});}
 
     // ============================================================
-    // STORE SETUP - STEP 3: Policies
+    // STORE PRODUCT LIST
     // ============================================================
-    static renderStorePolicies() {
-        const container = document.getElementById('screen-store-setup');
-        if (!container) return;
-        const saved = JSON.parse(localStorage.getItem('shoplify_store_setup') || '{}');
-        container.innerHTML = `
-            <div class="back-header"><button class="back-btn" onclick="ShoplifyApp.navigate('store-setup-branding')">←</button><span class="back-title">Policies (3/7)</span></div>
-            <div style="padding:16px">
-                <div style="display:flex;gap:4px;margin-bottom:20px">${[1,2,3,4,5,6,7].map(i=>`<div style="min-width:30px;height:4px;border-radius:2px;background:${i<=3?'var(--gold)':'var(--gray-700)'}"></div>`).join('')}</div>
-                <div class="form-group"><label class="form-label">Refund Policy</label><textarea class="form-input form-textarea" id="policy-refund" rows="3" placeholder="Your refund policy...">${saved.policyRefund||''}</textarea></div>
-                <div class="form-group"><label class="form-label">Privacy Policy</label><textarea class="form-input form-textarea" id="policy-privacy" rows="3" placeholder="Your privacy policy...">${saved.policyPrivacy||''}</textarea></div>
-                <div class="form-group"><label class="form-label">Terms of Service</label><textarea class="form-input form-textarea" id="policy-terms" rows="3" placeholder="Your terms...">${saved.policyTerms||''}</textarea></div>
-                <div class="form-group"><label class="form-label">Shipping Policy</label><textarea class="form-input form-textarea" id="policy-shipping" rows="3" placeholder="Your shipping policy...">${saved.policyShipping||''}</textarea></div>
-                <button class="btn btn-primary btn-block" id="save-step3-btn">Save & Continue →</button>
-            </div>
-        `;
-        document.getElementById('save-step3-btn').addEventListener('click', () => {
-            saved.policyRefund = document.getElementById('policy-refund').value.trim();
-            saved.policyPrivacy = document.getElementById('policy-privacy').value.trim();
-            saved.policyTerms = document.getElementById('policy-terms').value.trim();
-            saved.policyShipping = document.getElementById('policy-shipping').value.trim();
-            localStorage.setItem('shoplify_store_setup', JSON.stringify(saved));
-            ShoplifyApp.navigate('store-setup-shipping');
-        });
-    }
+    static async renderStoreProductList(){const container=document.getElementById('screen-store-products');if(!container)return;const app=window.ShoplifyApp||ShoplifyApp;const profile=app.state.profile;if(!profile?.storeId){container.innerHTML=`<div style="padding:16px"><button onclick="ShoplifyApp.navigate('store-dashboard')">←</button></div><div style="text-align:center;padding:60px"><div style="font-size:3rem">📦</div><div style="font-weight:600;color:var(--dark)">No Store</div></div>`;return;}container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.navigate('store-dashboard')">←</button><span style="font-weight:700;color:var(--dark)">My Products</span></div><div style="padding:0 16px"><button class="btn btn-primary btn-block" style="margin-bottom:16px" onclick="ShoplifyApp.navigate('store-add-product')">+ Add Product</button><div id="store-product-list"><div style="text-align:center;padding:40px"><div class="skeleton" style="height:200px"></div></div></div></div>`;const snap=await Firebase.collections.products.where('storeId','==',profile.storeId).orderBy('createdAt','desc').limit(50).get();const products=[];snap.forEach(d=>products.push({id:d.id,...d.data()}));if(products.length>0){DOMHelper.render('store-product-list','<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+products.map(p=>ComponentFactory.productCard(p,'$')).join('')+'</div>');}else{DOMHelper.render('store-product-list','<div style="text-align:center;padding:60px"><div style="font-size:3rem">📦</div><div style="font-weight:600;color:var(--dark)">No Products</div><div style="color:var(--gray-500)">Add your first product.</div></div>');}}
 
     // ============================================================
-    // STORE SETUP - STEP 4: Shipping
+    // STORE COLLECTIONS
     // ============================================================
-    static renderStoreShipping() {
-        const container = document.getElementById('screen-store-setup');
-        if (!container) return;
-        const saved = JSON.parse(localStorage.getItem('shoplify_store_setup') || '{}');
-        container.innerHTML = `
-            <div class="back-header"><button class="back-btn" onclick="ShoplifyApp.navigate('store-setup-policies')">←</button><span class="back-title">Shipping (4/7)</span></div>
-            <div style="padding:16px">
-                <div style="display:flex;gap:4px;margin-bottom:20px">${[1,2,3,4,5,6,7].map(i=>`<div style="min-width:30px;height:4px;border-radius:2px;background:${i<=4?'var(--gold)':'var(--gray-700)'}"></div>`).join('')}</div>
-                <div class="form-group"><label class="form-label">Shipping Zones (comma separated)</label><input type="text" class="form-input" id="shipping-zones" placeholder="Nigeria, West Africa, Worldwide" value="${saved.shippingZones||''}"></div>
-                <div class="form-group"><label class="form-label">Shipping Rate (USD)</label><input type="number" class="form-input" id="shipping-rate" placeholder="5.99" value="${saved.shippingRate||'5.99'}"></div>
-                <div class="form-group"><label class="form-label">Free Shipping Threshold (USD, 0 to disable)</label><input type="number" class="form-input" id="free-shipping" placeholder="50" value="${saved.freeShipping||'0'}"></div>
-                <div class="form-group"><label class="form-label">Estimated Delivery Time</label><input type="text" class="form-input" id="delivery-time" placeholder="5-10 business days" value="${saved.deliveryTime||''}"></div>
-                <button class="btn btn-primary btn-block" id="save-step4-btn">Save & Continue →</button>
-            </div>
-        `;
-        document.getElementById('save-step4-btn').addEventListener('click', () => {
-            saved.shippingZones = document.getElementById('shipping-zones').value.trim();
-            saved.shippingRate = document.getElementById('shipping-rate').value.trim();
-            saved.freeShipping = document.getElementById('free-shipping').value.trim();
-            saved.deliveryTime = document.getElementById('delivery-time').value.trim();
-            localStorage.setItem('shoplify_store_setup', JSON.stringify(saved));
-            ShoplifyApp.navigate('store-setup-payments');
-        });
-    }
+    static async renderStoreCollections(){const container=document.getElementById('screen-store-collections');if(!container)return;container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.navigate('store-dashboard')">←</button><span style="font-weight:700;color:var(--dark)">Collections</span></div><div style="padding:16px"><div style="background:var(--cream);border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-weight:600;color:var(--dark)">📂 Manage Collections</div><div style="color:var(--gray-500);font-size:0.8rem;margin-top:4px">Group products into collections like "Best Sellers", "New Arrivals", etc.</div></div><button class="btn btn-primary btn-block" onclick="Toast.info('Collection editor coming soon')">+ Create Collection</button></div>`;}
 
     // ============================================================
-    // STORE SETUP - STEP 5: Payments
+    // STORE ORDER MANAGEMENT
     // ============================================================
-    static renderStorePayments() {
-        const container = document.getElementById('screen-store-setup');
-        if (!container) return;
-        const app = window.ShoplifyApp || ShoplifyApp;
-        const saved = JSON.parse(localStorage.getItem('shoplify_store_setup') || '{}');
-        container.innerHTML = `
-            <div class="back-header"><button class="back-btn" onclick="ShoplifyApp.navigate('store-setup-shipping')">←</button><span class="back-title">Payments (5/7)</span></div>
-            <div style="padding:16px">
-                <div style="display:flex;gap:4px;margin-bottom:20px">${[1,2,3,4,5,6,7].map(i=>`<div style="min-width:30px;height:4px;border-radius:2px;background:${i<=5?'var(--gold)':'var(--gray-700)'}"></div>`).join('')}</div>
-                <div class="info-card gold-tint"><div class="info-title">💰 Shoplify Wallet</div><div class="info-text">Your UID: <strong>${app.state.user?.uid||''}</strong><br>Enable to receive payments directly to your wallet.</div></div>
-                <div class="form-group"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="enable-wallet" checked> Enable Shoplify Wallet</label></div>
-                <button class="btn btn-primary btn-block" id="save-step5-btn">Save & Continue →</button>
-            </div>
-        `;
-        document.getElementById('save-step5-btn').addEventListener('click', () => {
-            saved.enableWallet = document.getElementById('enable-wallet').checked;
-            localStorage.setItem('shoplify_store_setup', JSON.stringify(saved));
-            ShoplifyApp.navigate('store-setup-navigation');
-        });
-    }
+    static async renderStoreOrderManagement(){const container=document.getElementById('screen-store-orders');if(!container)return;const app=window.ShoplifyApp||ShoplifyApp;const profile=app.state.profile;if(!profile?.storeId){container.innerHTML=`<div style="padding:16px"><button onclick="ShoplifyApp.navigate('store-dashboard')">←</button></div><div style="text-align:center;padding:60px"><div style="font-size:3rem">📋</div><div style="font-weight:600;color:var(--dark)">No Store</div></div>`;return;}container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.navigate('store-dashboard')">←</button><span style="font-weight:700;color:var(--dark)">Store Orders</span></div><div id="store-orders-list" style="padding:0 16px"><div style="text-align:center;padding:40px"><div class="skeleton" style="height:80px;margin-bottom:8px"></div></div></div>`;try{const snap=await Firebase.collections.orders.where('items.storeId','array-contains',profile.storeId).orderBy('createdAt','desc').limit(50).get();const orders=[];snap.forEach(d=>orders.push({id:d.id,...d.data()}));if(orders.length>0){DOMHelper.render('store-orders-list',orders.map(o=>ComponentFactory.orderCard(o,'$')).join(''));}else{DOMHelper.render('store-orders-list','<div style="text-align:center;padding:60px"><div style="font-size:3rem">📋</div><div style="font-weight:600;color:var(--dark)">No Orders</div></div>');}}catch(e){DOMHelper.render('store-orders-list','<div style="text-align:center;padding:60px"><div style="font-size:3rem">⚠️</div><div style="color:var(--gray-500)">Error loading orders</div></div>');}}
 
     // ============================================================
-    // STORE SETUP - STEP 6: Navigation
+    // STORE CUSTOMERS
     // ============================================================
-    static renderStoreNavigation() {
-        const container = document.getElementById('screen-store-setup');
-        if (!container) return;
-        const saved = JSON.parse(localStorage.getItem('shoplify_store_setup') || '{}');
-        container.innerHTML = `
-            <div class="back-header"><button class="back-btn" onclick="ShoplifyApp.navigate('store-setup-payments')">←</button><span class="back-title">Navigation (6/7)</span></div>
-            <div style="padding:16px">
-                <div style="display:flex;gap:4px;margin-bottom:20px">${[1,2,3,4,5,6,7].map(i=>`<div style="min-width:30px;height:4px;border-radius:2px;background:${i<=6?'var(--gold)':'var(--gray-700)'}"></div>`).join('')}</div>
-                <div class="form-group"><label class="form-label">Main Menu Items (one per line)</label><textarea class="form-input form-textarea" id="main-menu" rows="4" placeholder="Home&#10;Shop&#10;Collections&#10;About Us&#10;Contact">${saved.mainMenu||'Home\nShop\nAbout\nContact'}</textarea></div>
-                <div class="form-group"><label class="form-label">Footer Menu Items (one per line)</label><textarea class="form-input form-textarea" id="footer-menu" rows="3" placeholder="Privacy Policy&#10;Terms of Service&#10;Shipping Info">${saved.footerMenu||'Privacy Policy\nTerms of Service\nShipping'}</textarea></div>
-                <button class="btn btn-primary btn-block" id="save-step6-btn">Save & Continue →</button>
-            </div>
-        `;
-        document.getElementById('save-step6-btn').addEventListener('click', () => {
-            saved.mainMenu = document.getElementById('main-menu').value.trim();
-            saved.footerMenu = document.getElementById('footer-menu').value.trim();
-            localStorage.setItem('shoplify_store_setup', JSON.stringify(saved));
-            ShoplifyApp.navigate('store-setup-products');
-        });
-    }
+    static async renderStoreCustomers(){const container=document.getElementById('screen-store-customers');if(!container)return;container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.navigate('store-dashboard')">←</button><span style="font-weight:700;color:var(--dark)">Customers</span></div><div style="padding:16px"><div style="background:var(--cream);border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-weight:600;color:var(--dark)">👥 Customer Management</div><div style="color:var(--gray-500);font-size:0.8rem;margin-top:4px">View customer profiles, purchase history, and loyalty points.</div></div><div style="text-align:center;padding:40px"><div style="font-size:3rem">👥</div><div style="color:var(--gray-500)">Customer data loads from orders</div></div></div>`;}
 
     // ============================================================
-    // STORE SETUP - STEP 7: Add Products & Launch
+    // STORE MARKETING
     // ============================================================
-    static renderStoreProducts() {
-        const container = document.getElementById('screen-store-setup');
-        if (!container) return;
-        const saved = JSON.parse(localStorage.getItem('shoplify_store_setup') || '{}');
-        container.innerHTML = `
-            <div class="back-header"><button class="back-btn" onclick="ShoplifyApp.navigate('store-setup-navigation')">←</button><span class="back-title">Products & Launch (7/7)</span></div>
-            <div style="padding:16px">
-                <div style="display:flex;gap:4px;margin-bottom:20px">${[1,2,3,4,5,6,7].map(i=>`<div style="min-width:30px;height:4px;border-radius:2px;background:${i<=7?'var(--gold)':'var(--gray-700)'}"></div>`).join('')}</div>
-                <p style="color:var(--gray-400);margin-bottom:16px;text-align:center">You can add products now or later from your dashboard.</p>
-                <button class="btn btn-outline btn-block" style="margin-bottom:12px" id="add-product-now-btn">📦 Add Your First Product</button>
-                <div id="quick-product-form" style="display:none">
-                    <div class="form-group"><label class="form-label">Product Name</label><input type="text" class="form-input" id="quick-product-name" placeholder="Product name"></div>
-                    <div class="form-group"><label class="form-label">Price (USD)</label><input type="number" class="form-input" id="quick-product-price" placeholder="29.99"></div>
-                    <div class="form-group"><label class="form-label">Description</label><textarea class="form-input form-textarea" id="quick-product-desc" rows="2" placeholder="Description"></textarea></div>
-                    <div class="form-group"><label class="form-label">Image URL</label><input type="url" class="form-input" id="quick-product-image" placeholder="https://...image.jpg"></div>
-                    <div class="form-group"><label class="form-label">Stock</label><input type="number" class="form-input" id="quick-product-stock" value="100"></div>
-                    <button class="btn btn-primary btn-block" id="save-quick-product">Save Product</button>
-                </div>
-                <p style="font-size:0.75rem;color:var(--gray-500);margin:16px 0;text-align:center">Activation fee: <strong>$${APP_CONFIG.storeActivationFeeUSD}</strong></p>
-                <button class="btn btn-primary btn-block btn-lg" id="launch-store-btn">🚀 Launch My Store</button>
-            </div>
-        `;
-
-        document.getElementById('add-product-now-btn').addEventListener('click', () => {
-            document.getElementById('quick-product-form').style.display = 'block';
-            document.getElementById('add-product-now-btn').style.display = 'none';
-        });
-
-        document.getElementById('save-quick-product').addEventListener('click', async () => {
-            const name = document.getElementById('quick-product-name').value.trim();
-            const price = parseFloat(document.getElementById('quick-product-price').value);
-            if (!name || !price) { Toast.error('Name and price required'); return; }
-            saved.quickProduct = {
-                name,
-                price,
-                description: document.getElementById('quick-product-desc').value.trim(),
-                image: document.getElementById('quick-product-image').value.trim(),
-                stock: parseInt(document.getElementById('quick-product-stock').value) || 100
-            };
-            localStorage.setItem('shoplify_store_setup', JSON.stringify(saved));
-            Toast.success('Product saved! Launch your store to add it.');
-        });
-
-        document.getElementById('launch-store-btn').addEventListener('click', async () => {
-            const app = window.ShoplifyApp || ShoplifyApp;
-            await app.refreshBalance();
-            const balance = app.getRealUSDBalance();
-            if (balance < APP_CONFIG.storeActivationFeeUSD) {
-                Toast.error(`Need ${app.formatUSD(APP_CONFIG.storeActivationFeeUSD)}. Current: ${app.formatUSD(balance)}`);
-                return;
-            }
-            const confirmed = await Modal.confirm(`Launch <strong>${saved.name}</strong> for <strong>$${APP_CONFIG.storeActivationFeeUSD}</strong>?`, 'Launch Store', 'Cancel');
-            if (!confirmed) return;
-            const deduct = await Firebase.deductFromWallet(app.state.user.uid, APP_CONFIG.storeActivationFeeUSD, 'Store activation');
-            if (!deduct.success) { Toast.error(deduct.error); return; }
-            const storeRef = await Firebase.collections.stores.add({
-                ownerId: app.state.user.uid,
-                name: saved.name,
-                legalName: saved.legalName || '',
-                email: saved.email || '',
-                supportEmail: saved.supportEmail || '',
-                address: saved.address || '',
-                description: saved.description || '',
-                logo: saved.logo || app.state.user.photoURL || '',
-                banner: saved.banner || '',
-                color: saved.color || '#D4AF37',
-                font: saved.font || 'Inter',
-                collections: saved.collections || '',
-                currency: saved.currency || 'USD',
-                timezone: saved.timezone || 'UTC',
-                policies: {
-                    refund: saved.policyRefund || '',
-                    privacy: saved.policyPrivacy || '',
-                    terms: saved.policyTerms || '',
-                    shipping: saved.policyShipping || ''
-                },
-                shippingZones: saved.shippingZones || '',
-                shippingRate: parseFloat(saved.shippingRate) || 5.99,
-                freeShipping: parseFloat(saved.freeShipping) || 0,
-                deliveryTime: saved.deliveryTime || '5-10 business days',
-                paymentMethods: ['shoplify_wallet'],
-                mainMenu: saved.mainMenu || 'Home\nShop\nAbout\nContact',
-                footerMenu: saved.footerMenu || 'Privacy\nTerms\nShipping',
-                verified: false,
-                followers: 0,
-                rating: 0,
-                status: 'active',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            await Firebase.updateUserProfile(app.state.user.uid, { isSeller: true, storeId: storeRef.id });
-            if (saved.quickProduct && saved.quickProduct.name) {
-                await Firebase.collections.products.add({
-                    storeId: storeRef.id,
-                    storeName: saved.name,
-                    name: saved.quickProduct.name,
-                    price: saved.quickProduct.price,
-                    description: saved.quickProduct.description || '',
-                    images: saved.quickProduct.image ? [saved.quickProduct.image] : [],
-                    stock: saved.quickProduct.stock || 100,
-                    category: 'fashion',
-                    status: 'active',
-                    affiliateEnabled: true,
-                    dropshipEnabled: true,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            }
-            localStorage.removeItem('shoplify_store_setup');
-            await app.refreshBalance();
-            Toast.success('Store launched! 🚀');
-            ShoplifyApp.navigate('store', storeRef.id);
-        });
-    }
-
-    static renderStoreLaunch() { ShoplifyFeatures.renderStoreProducts(); }
-    static renderStoreNotifications() { ShoplifyApp.navigate('store-setup-products'); }
+    static async renderStoreMarketing(){const container=document.getElementById('screen-store-marketing');if(!container)return;container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.navigate('store-dashboard')">←</button><span style="font-weight:700;color:var(--dark)">Marketing</span></div><div style="padding:16px"><div style="background:var(--cream);border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-weight:600;color:var(--dark)">📢 Promote Your Store</div><div style="color:var(--gray-500);font-size:0.8rem;margin-top:4px">Create campaigns, discounts, and promotions.</div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button class="btn btn-outline" onclick="Toast.info('Campaigns coming soon')">📧 Email Campaigns</button><button class="btn btn-outline" onclick="Toast.info('Discounts coming soon')">🏷️ Discounts</button><button class="btn btn-outline" onclick="ShoplifyApp.navigate('affiliate')">🤝 Affiliate Program</button><button class="btn btn-outline" onclick="Toast.info('Social coming soon')">📱 Social Media</button></div></div>`;}
 
     // ============================================================
-    // CREATE STORE (Legacy)
+    // STORE SETTINGS
     // ============================================================
-    static async createStore() { ShoplifyApp.navigate('store-setup'); }
-
-    static async signOut() {
-        const confirmed = await Modal.confirm('Sign out?');
-        if (confirmed) {
-            const app = window.ShoplifyApp || ShoplifyApp;
-            await Firebase.signOut();
-            app.state.user = null; app.state.profile = null; app.state.usdBalance = 0;
-            app.state.cart = []; app.state.wishlist = [];
-            app.hideApp(); app.showAuth();
-            Toast.info('Signed out');
-        }
-    }
+    static async renderStoreSettingsPage(){const container=document.getElementById('screen-store-settings');if(!container)return;const app=window.ShoplifyApp||ShoplifyApp;const profile=app.state.profile;container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.navigate('store-dashboard')">←</button><span style="font-weight:700;color:var(--dark)">Store Settings</span></div><div style="padding:0 16px">${ComponentFactory.profileMenuItem('💰','Payments','ShoplifyApp.navigate("store-setup-payments")')}${ComponentFactory.profileMenuItem('🚚','Shipping','ShoplifyApp.navigate("store-setup-shipping")')}${ComponentFactory.profileMenuItem('📋','Policies','ShoplifyApp.navigate("store-setup-policies")')}${ComponentFactory.profileMenuItem('🔗','Store URL','Toast.info("'+APP_CONFIG.appDomain+'/store/'+(profile?.storeId||'')+'")')}${ComponentFactory.profileMenuItem('🗑️','Delete Store','Toast.info("Contact support to delete store")')}</div>`;}
 
     // ============================================================
-    // NOTIFICATIONS
+    // STORE SETUP WIZARD (7 Steps)
     // ============================================================
-    static async renderNotifications() {
-        const container = document.getElementById('screen-notifications');
-        if (!container) return;
-        const app = window.ShoplifyApp || ShoplifyApp;
-        container.innerHTML = `<div class="back-header"><button class="back-btn" onclick="ShoplifyApp.goBack()">←</button><span class="back-title">Notifications</span></div><div id="notifications-list">${SkeletonFactory.line()}${SkeletonFactory.line()}</div>`;
-        if (app.state.user) {
-            const result = await Firebase.getNotifications(app.state.user.uid);
-            if (result.success && result.notifications.length > 0) {
-                DOMHelper.render('notifications-list', result.notifications.map(n => ComponentFactory.notificationItem(n)).join(''));
-            } else {
-                DOMHelper.render('notifications-list', ComponentFactory.emptyState('🔔', 'No Notifications', ''));
-            }
-        }
-    }
+    static renderStoreSetup(){const container=document.getElementById('screen-store-setup');if(!container)return;const app=window.ShoplifyApp||ShoplifyApp;container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.goBack()">←</button><span style="font-weight:700;color:var(--dark)">Store Setup (1/7)</span></div><div style="padding:16px"><div style="display:flex;gap:4px;margin-bottom:20px">${[1,2,3,4,5,6,7].map(i=>`<div style="flex:1;height:4px;border-radius:2px;background:${i===1?'var(--gold)':'var(--gray-200)'}"></div>`).join('')}</div><div class="form-group"><label class="form-label" style="color:var(--dark)">Store Name *</label><input type="text" class="form-input" id="store-name" placeholder="My Store" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Legal Business Name</label><input type="text" class="form-input" id="store-legal-name" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Contact Email *</label><input type="email" class="form-input" id="store-email" value="${app.state.user?.email||''}" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Support Email</label><input type="email" class="form-input" id="store-support-email" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Business Address</label><textarea class="form-input" id="store-address" rows="2" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></textarea></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Description</label><textarea class="form-input" id="store-description" rows="3" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></textarea></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Logo URL</label><input type="url" class="form-input" id="store-logo" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Currency</label><select class="form-input" id="store-currency" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"><option value="USD">USD ($)</option><option value="EUR">EUR (€)</option><option value="GBP">GBP (£)</option><option value="NGN">NGN (₦)</option></select></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Time Zone</label><select class="form-input" id="store-timezone" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"><option value="UTC">UTC</option><option value="WAT">West Africa (WAT)</option><option value="GMT">London (GMT)</option><option value="CET">Europe (CET)</option><option value="EST">US Eastern</option><option value="PST">US Pacific</option></select></div><p style="font-size:0.75rem;color:var(--gray-500);margin-bottom:16px">Fee: <strong>$${APP_CONFIG.storeActivationFeeUSD}</strong></p><button class="btn btn-primary btn-block" id="save-step1-btn">Save & Continue →</button></div>`;document.getElementById('save-step1-btn').addEventListener('click',()=>{const name=document.getElementById('store-name').value.trim();if(!name){Toast.error('Store name required');return;}localStorage.setItem('shoplify_store_setup',JSON.stringify({name,legalName:document.getElementById('store-legal-name').value.trim(),email:document.getElementById('store-email').value.trim(),supportEmail:document.getElementById('store-support-email').value.trim(),address:document.getElementById('store-address').value.trim(),description:document.getElementById('store-description').value.trim(),logo:document.getElementById('store-logo').value.trim(),currency:document.getElementById('store-currency').value,timezone:document.getElementById('store-timezone').value}));ShoplifyApp.navigate('store-setup-branding');});}
+
+    static renderStoreSetupBranding(){const container=document.getElementById('screen-store-setup');if(!container)return;const saved=JSON.parse(localStorage.getItem('shoplify_store_setup')||'{}');container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.navigate('store-setup')">←</button><span style="font-weight:700;color:var(--dark)">Branding (2/7)</span></div><div style="padding:16px"><div style="display:flex;gap:4px;margin-bottom:20px">${[1,2,3,4,5,6,7].map(i=>`<div style="flex:1;height:4px;border-radius:2px;background:${i<=2?'var(--gold)':'var(--gray-200)'}"></div>`).join('')}</div><div class="form-group"><label class="form-label" style="color:var(--dark)">Banner URL</label><input type="url" class="form-input" id="store-banner" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Primary Color</label><input type="color" class="form-input" id="store-color" value="#D4AF37" style="height:50px;padding:4px"></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Font</label><select class="form-input" id="store-font" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"><option value="Inter">Inter (Modern)</option><option value="serif">Serif (Classic)</option><option value="mono">Mono (Clean)</option></select></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Featured Collections</label><input type="text" class="form-input" id="store-collections" placeholder="Best Sellers, New Arrivals" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></div><button class="btn btn-primary btn-block" id="save-step2-btn">Save & Continue →</button></div>`;document.getElementById('save-step2-btn').addEventListener('click',()=>{saved.banner=document.getElementById('store-banner').value.trim();saved.color=document.getElementById('store-color').value;saved.font=document.getElementById('store-font').value;saved.collections=document.getElementById('store-collections').value.trim();localStorage.setItem('shoplify_store_setup',JSON.stringify(saved));ShoplifyApp.navigate('store-setup-policies');});}
+
+    static renderStorePolicies(){const container=document.getElementById('screen-store-setup');if(!container)return;const saved=JSON.parse(localStorage.getItem('shoplify_store_setup')||'{}');container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.navigate('store-setup-branding')">←</button><span style="font-weight:700;color:var(--dark)">Policies (3/7)</span></div><div style="padding:16px"><div style="display:flex;gap:4px;margin-bottom:20px">${[1,2,3,4,5,6,7].map(i=>`<div style="flex:1;height:4px;border-radius:2px;background:${i<=3?'var(--gold)':'var(--gray-200)'}"></div>`).join('')}</div><div class="form-group"><label class="form-label" style="color:var(--dark)">Refund Policy</label><textarea class="form-input" id="policy-refund" rows="3" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)">${saved.policyRefund||''}</textarea></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Privacy Policy</label><textarea class="form-input" id="policy-privacy" rows="3" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)">${saved.policyPrivacy||''}</textarea></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Terms of Service</label><textarea class="form-input" id="policy-terms" rows="3" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)">${saved.policyTerms||''}</textarea></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Shipping Policy</label><textarea class="form-input" id="policy-shipping" rows="3" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)">${saved.policyShipping||''}</textarea></div><button class="btn btn-primary btn-block" id="save-step3-btn">Save & Continue →</button></div>`;document.getElementById('save-step3-btn').addEventListener('click',()=>{saved.policyRefund=document.getElementById('policy-refund').value.trim();saved.policyPrivacy=document.getElementById('policy-privacy').value.trim();saved.policyTerms=document.getElementById('policy-terms').value.trim();saved.policyShipping=document.getElementById('policy-shipping').value.trim();localStorage.setItem('shoplify_store_setup',JSON.stringify(saved));ShoplifyApp.navigate('store-setup-shipping');});}
+
+    static renderStoreShipping(){const container=document.getElementById('screen-store-setup');if(!container)return;const saved=JSON.parse(localStorage.getItem('shoplify_store_setup')||'{}');container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.navigate('store-setup-policies')">←</button><span style="font-weight:700;color:var(--dark)">Shipping (4/7)</span></div><div style="padding:16px"><div style="display:flex;gap:4px;margin-bottom:20px">${[1,2,3,4,5,6,7].map(i=>`<div style="flex:1;height:4px;border-radius:2px;background:${i<=4?'var(--gold)':'var(--gray-200)'}"></div>`).join('')}</div><div class="form-group"><label class="form-label" style="color:var(--dark)">Shipping Zones</label><input type="text" class="form-input" id="shipping-zones" placeholder="Nigeria, West Africa, Worldwide" value="${saved.shippingZones||''}" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Shipping Rate (USD)</label><input type="number" class="form-input" id="shipping-rate" value="${saved.shippingRate||'5.99'}" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Free Shipping Threshold (USD)</label><input type="number" class="form-input" id="free-shipping" value="${saved.freeShipping||'0'}" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Delivery Time</label><input type="text" class="form-input" id="delivery-time" value="${saved.deliveryTime||'5-10 business days'}" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></div><button class="btn btn-primary btn-block" id="save-step4-btn">Save & Continue →</button></div>`;document.getElementById('save-step4-btn').addEventListener('click',()=>{saved.shippingZones=document.getElementById('shipping-zones').value.trim();saved.shippingRate=document.getElementById('shipping-rate').value.trim();saved.freeShipping=document.getElementById('free-shipping').value.trim();saved.deliveryTime=document.getElementById('delivery-time').value.trim();localStorage.setItem('shoplify_store_setup',JSON.stringify(saved));ShoplifyApp.navigate('store-setup-payments');});}
+
+    static renderStorePayments(){const container=document.getElementById('screen-store-setup');if(!container)return;const app=window.ShoplifyApp||ShoplifyApp;const saved=JSON.parse(localStorage.getItem('shoplify_store_setup')||'{}');container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.navigate('store-setup-shipping')">←</button><span style="font-weight:700;color:var(--dark)">Payments (5/7)</span></div><div style="padding:16px"><div style="display:flex;gap:4px;margin-bottom:20px">${[1,2,3,4,5,6,7].map(i=>`<div style="flex:1;height:4px;border-radius:2px;background:${i<=5?'var(--gold)':'var(--gray-200)'}"></div>`).join('')}</div><div style="background:rgba(212,175,55,0.1);border-radius:12px;padding:16px;margin-bottom:16px"><div style="font-weight:600;color:var(--dark)">💰 Shoplify Wallet</div><div style="color:var(--gray-600);font-size:0.8rem;margin-top:4px">Your UID: <strong>${app.state.user?.uid||''}</strong><br>Enable to receive payments directly.</div></div><div class="form-group"><label style="display:flex;align-items:center;gap:8px;color:var(--dark)"><input type="checkbox" id="enable-wallet" checked> Enable Shoplify Wallet</label></div><button class="btn btn-primary btn-block" id="save-step5-btn">Save & Continue →</button></div>`;document.getElementById('save-step5-btn').addEventListener('click',()=>{saved.enableWallet=document.getElementById('enable-wallet').checked;localStorage.setItem('shoplify_store_setup',JSON.stringify(saved));ShoplifyApp.navigate('store-setup-navigation');});}
+
+    static renderStoreNavigation(){const container=document.getElementById('screen-store-setup');if(!container)return;const saved=JSON.parse(localStorage.getItem('shoplify_store_setup')||'{}');container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.navigate('store-setup-payments')">←</button><span style="font-weight:700;color:var(--dark)">Navigation (6/7)</span></div><div style="padding:16px"><div style="display:flex;gap:4px;margin-bottom:20px">${[1,2,3,4,5,6,7].map(i=>`<div style="flex:1;height:4px;border-radius:2px;background:${i<=6?'var(--gold)':'var(--gray-200)'}"></div>`).join('')}</div><div class="form-group"><label class="form-label" style="color:var(--dark)">Main Menu (one per line)</label><textarea class="form-input" id="main-menu" rows="4" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)">${saved.mainMenu||'Home\nShop\nAbout\nContact'}</textarea></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Footer Menu (one per line)</label><textarea class="form-input" id="footer-menu" rows="3" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)">${saved.footerMenu||'Privacy\nTerms\nShipping'}</textarea></div><button class="btn btn-primary btn-block" id="save-step6-btn">Save & Continue →</button></div>`;document.getElementById('save-step6-btn').addEventListener('click',()=>{saved.mainMenu=document.getElementById('main-menu').value.trim();saved.footerMenu=document.getElementById('footer-menu').value.trim();localStorage.setItem('shoplify_store_setup',JSON.stringify(saved));ShoplifyApp.navigate('store-setup-products');});}
+
+    static renderStoreProducts(){const container=document.getElementById('screen-store-setup');if(!container)return;const saved=JSON.parse(localStorage.getItem('shoplify_store_setup')||'{}');container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.navigate('store-setup-navigation')">←</button><span style="font-weight:700;color:var(--dark)">Products & Launch (7/7)</span></div><div style="padding:16px"><div style="display:flex;gap:4px;margin-bottom:20px">${[1,2,3,4,5,6,7].map(i=>`<div style="flex:1;height:4px;border-radius:2px;background:${i<=7?'var(--gold)':'var(--gray-200)'}"></div>`).join('')}</div><p style="color:var(--gray-600);margin-bottom:16px;text-align:center">You can add products now or later.</p><button class="btn btn-outline btn-block" style="margin-bottom:12px" id="add-product-now-btn">📦 Add First Product</button><div id="quick-product-form" style="display:none"><div class="form-group"><label class="form-label" style="color:var(--dark)">Product Name</label><input type="text" class="form-input" id="quick-product-name" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Price (USD)</label><input type="number" class="form-input" id="quick-product-price" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Image URL</label><input type="url" class="form-input" id="quick-product-image" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Stock</label><input type="number" class="form-input" id="quick-product-stock" value="100" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></div><button class="btn btn-primary btn-block" id="save-quick-product">Save Product</button></div><p style="font-size:0.75rem;color:var(--gray-500);margin:16px 0;text-align:center">Activation fee: <strong>$${APP_CONFIG.storeActivationFeeUSD}</strong></p><button class="btn btn-primary btn-block btn-lg" id="launch-store-btn">🚀 Launch My Store</button></div>`;document.getElementById('add-product-now-btn').addEventListener('click',()=>{document.getElementById('quick-product-form').style.display='block';document.getElementById('add-product-now-btn').style.display='none';});document.getElementById('save-quick-product').addEventListener('click',()=>{const name=document.getElementById('quick-product-name').value.trim();const price=parseFloat(document.getElementById('quick-product-price').value);if(!name||!price){Toast.error('Name and price required');return;}saved.quickProduct={name,price,image:document.getElementById('quick-product-image').value.trim(),stock:parseInt(document.getElementById('quick-product-stock').value)||100};localStorage.setItem('shoplify_store_setup',JSON.stringify(saved));Toast.success('Product saved!');});document.getElementById('launch-store-btn').addEventListener('click',async()=>{const app=window.ShoplifyApp||ShoplifyApp;await app.refreshBalance();const balance=app.getRealUSDBalance();if(balance<APP_CONFIG.storeActivationFeeUSD){Toast.error(`Need ${app.formatUSD(APP_CONFIG.storeActivationFeeUSD)}. Current: ${app.formatUSD(balance)}`);return;}const confirmed=await Modal.confirm(`Launch <strong>${saved.name}</strong> for $${APP_CONFIG.storeActivationFeeUSD}?`,'Launch','Cancel');if(!confirmed)return;const deduct=await Firebase.deductFromWallet(app.state.user.uid,APP_CONFIG.storeActivationFeeUSD,'Store activation');if(!deduct.success){Toast.error(deduct.error);return;}const storeRef=await Firebase.collections.stores.add({ownerId:app.state.user.uid,name:saved.name,legalName:saved.legalName||'',email:saved.email||'',supportEmail:saved.supportEmail||'',address:saved.address||'',description:saved.description||'',logo:saved.logo||app.state.user.photoURL||'',banner:saved.banner||'',color:saved.color||'#D4AF37',font:saved.font||'Inter',collections:saved.collections||'',currency:saved.currency||'USD',timezone:saved.timezone||'UTC',policies:{refund:saved.policyRefund||'',privacy:saved.policyPrivacy||'',terms:saved.policyTerms||'',shipping:saved.policyShipping||''},shippingZones:saved.shippingZones||'',shippingRate:parseFloat(saved.shippingRate)||5.99,freeShipping:parseFloat(saved.freeShipping)||0,deliveryTime:saved.deliveryTime||'5-10 business days',paymentMethods:['shoplify_wallet'],mainMenu:saved.mainMenu||'Home\nShop\nAbout\nContact',footerMenu:saved.footerMenu||'Privacy\nTerms\nShipping',verified:false,followers:0,rating:0,status:'active',createdAt:firebase.firestore.FieldValue.serverTimestamp()});await Firebase.updateUserProfile(app.state.user.uid,{isSeller:true,storeId:storeRef.id});if(saved.quickProduct&&saved.quickProduct.name){await Firebase.collections.products.add({storeId:storeRef.id,storeName:saved.name,name:saved.quickProduct.name,price:saved.quickProduct.price,description:'',images:saved.quickProduct.image?[saved.quickProduct.image]:[],stock:saved.quickProduct.stock||100,category:'fashion',status:'active',affiliateEnabled:true,dropshipEnabled:true,createdAt:firebase.firestore.FieldValue.serverTimestamp()});}localStorage.removeItem('shoplify_store_setup');await app.refreshBalance();Toast.success('Store launched! 🚀');ShoplifyApp.navigate('store',storeRef.id);});}
+
+    static renderStoreLaunch(){ShoplifyFeatures.renderStoreProducts();}
+    static createStore(){ShoplifyApp.navigate('store-setup');}
+
+    static async signOut(){const confirmed=await Modal.confirm('Sign out?');if(confirmed){const app=window.ShoplifyApp||ShoplifyApp;await Firebase.signOut();app.state.user=null;app.state.profile=null;app.state.usdBalance=0;app.state.cart=[];app.state.wishlist=[];app.hideApp();app.showAuth();Toast.info('Signed out');}}
 
     // ============================================================
-    // ANALYTICS
+    // NOTIFICATIONS, ANALYTICS, HELP, ADMIN, REPORTS
     // ============================================================
-    static async renderAnalytics() {
-        const container = document.getElementById('screen-analytics');
-        if (!container) return;
-        const app = window.ShoplifyApp || ShoplifyApp;
-        const profile = app.state.profile;
-        container.innerHTML = `
-            <div class="back-header"><button class="back-btn" onclick="ShoplifyApp.goBack()">←</button><span class="back-title">Analytics</span></div>
-            <div style="padding:16px">
-                <div class="earnings-grid">
-                    <div class="earnings-card"><div class="earnings-label">Revenue</div><div class="earnings-amount">${app.formatUSD(profile?.totalEarnings||0)}</div></div>
-                    <div class="earnings-card"><div class="earnings-label">Orders</div><div class="earnings-amount">${profile?.orderCount||0}</div></div>
-                    <div class="earnings-card"><div class="earnings-label">Clicks</div><div class="earnings-amount affiliate">${ComponentFactory.formatCount(profile?.affiliateClicks||0)}</div></div>
-                    <div class="earnings-card"><div class="earnings-label">Conversions</div><div class="earnings-amount sales">${profile?.affiliateConversions||0}</div></div>
-                </div>
-                <canvas id="analytics-chart" style="margin-top:16px;max-height:250px"></canvas>
-                ${profile?.isSeller ? `<div style="margin-top:16px;text-align:center"><p style="color:var(--gold)">🔗 ${APP_CONFIG.appDomain}/store/${profile.storeId}</p></div>` : ''}
-            </div>
-        `;
-        setTimeout(() => {
-            const canvas = document.getElementById('analytics-chart');
-            if (canvas && typeof Chart !== 'undefined') {
-                new Chart(canvas, {
-                    type: 'line',
-                    data: {
-                        labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
-                        datasets: [{
-                            label: 'Revenue (USD)',
-                            data: [0,0,0,0,0,0,profile?.totalEarnings||0],
-                            borderColor: '#D4AF37',
-                            backgroundColor: 'rgba(212,175,55,0.1)',
-                            fill: true, tension: 0.4
-                        }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { labels: { color: '#9CA3AF' } } },
-                        scales: {
-                            x: { ticks: { color: '#6B7280' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                            y: { ticks: { color: '#6B7280' }, grid: { color: 'rgba(255,255,255,0.05)' } }
-                        }
-                    }
-                });
-            }
-        }, 500);
-    }
+    static async renderNotifications(){const container=document.getElementById('screen-notifications');if(!container)return;const app=window.ShoplifyApp||ShoplifyApp;container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.goBack()">←</button><span style="font-weight:700;color:var(--dark)">Notifications</span></div><div id="notifications-list" style="padding:0 16px"></div>`;if(app.state.user){const result=await Firebase.getNotifications(app.state.user.uid);if(result.success&&result.notifications.length>0){DOMHelper.render('notifications-list',result.notifications.map(n=>ComponentFactory.notificationItem(n)).join(''));}else{DOMHelper.render('notifications-list','<div style="text-align:center;padding:60px"><div style="font-size:3rem">🔔</div><div style="color:var(--gray-500)">No notifications</div></div>');}}}
 
-    // ============================================================
-    // HELP
-    // ============================================================
-    static renderHelp() {
-        const container = document.getElementById('screen-help');
-        if (!container) return;
-        container.innerHTML = `
-            <div class="back-header"><button class="back-btn" onclick="ShoplifyApp.goBack()">←</button><span class="back-title">Help & Support</span></div>
-            <div style="padding:16px">
-                ${ComponentFactory.infoCard('📧 Contact', `Email: ${ADMIN_EMAIL}<br>Response: within 24 hours`, '', false)}
-                ${ComponentFactory.infoCard('💬 WhatsApp', 'Join our community for tips and support.', '', false)}
-                ${ComponentFactory.infoCard('📚 FAQ', 'How to sell? How to become an affiliate? How does dropshipping work? How does escrow protect me?', '', true)}
-                <button class="btn btn-primary btn-block" onclick="window.open('${APP_CONFIG.whatsappCommunityLink}','_blank')">💬 Join WhatsApp</button>
-                <button class="btn btn-outline btn-block" style="margin-top:8px" onclick="Toast.info('Email: ${ADMIN_EMAIL}')">📧 Email Support</button>
-            </div>
-        `;
-    }
+    static async renderAnalytics(){const container=document.getElementById('screen-analytics');if(!container)return;const app=window.ShoplifyApp||ShoplifyApp;const profile=app.state.profile;container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.goBack()">←</button><span style="font-weight:700;color:var(--dark)">Analytics</span></div><div style="padding:16px"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px"><div style="background:var(--cream);border-radius:12px;padding:16px"><div style="font-size:0.7rem;color:var(--gray-500)">REVENUE</div><div style="font-weight:700;color:var(--dark)">${app.formatUSD(profile?.totalEarnings||0)}</div></div><div style="background:var(--cream);border-radius:12px;padding:16px"><div style="font-size:0.7rem;color:var(--gray-500)">ORDERS</div><div style="font-weight:700;color:var(--dark)">${profile?.orderCount||0}</div></div><div style="background:var(--cream);border-radius:12px;padding:16px"><div style="font-size:0.7rem;color:var(--gray-500)">CLICKS</div><div style="font-weight:700;color:var(--gold-dark)">${ComponentFactory.formatCount(profile?.affiliateClicks||0)}</div></div><div style="background:var(--cream);border-radius:12px;padding:16px"><div style="font-size:0.7rem;color:var(--gray-500)">CONVERSIONS</div><div style="font-weight:700;color:var(--green)">${profile?.affiliateConversions||0}</div></div></div><canvas id="analytics-chart" style="max-height:250px"></canvas>${profile?.isSeller?`<div style="margin-top:16px;text-align:center"><p style="color:var(--gold-dark)">🔗 ${APP_CONFIG.appDomain}/store/${profile.storeId}</p></div>`:''}</div>`;setTimeout(()=>{const canvas=document.getElementById('analytics-chart');if(canvas&&typeof Chart!=='undefined'){new Chart(canvas,{type:'line',data:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],datasets:[{label:'Revenue (USD)',data:[0,0,0,0,0,0,profile?.totalEarnings||0],borderColor:'#D4AF37',backgroundColor:'rgba(212,175,55,0.1)',fill:true,tension:0.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#6B7280'}}},scales:{x:{ticks:{color:'#6B7280'},grid:{color:'rgba(0,0,0,0.05)'}},y:{ticks:{color:'#6B7280'},grid:{color:'rgba(0,0,0,0.05)'}}}}});}},500);}
 
-    // ============================================================
-    // ADMIN DASHBOARD
-    // ============================================================
-    static async renderAdmin() {
-        const container = document.getElementById('screen-admin');
-        if (!container) return;
-        const app = window.ShoplifyApp || ShoplifyApp;
-        if (!app.state.user || !ADMIN_EMAILS.includes(app.state.user.email)) {
-            container.innerHTML = `<div class="back-header"><button class="back-btn" onclick="ShoplifyApp.goBack()">←</button></div>${ComponentFactory.emptyState('🔒','Access Denied','')}`;
-            return;
-        }
-        container.innerHTML = `
-            <div class="back-header"><button class="back-btn" onclick="ShoplifyApp.goBack()">←</button><span class="back-title">Admin</span></div>
-            <div style="padding:16px">
-                <div class="earnings-grid">
-                    <div class="earnings-card"><div class="earnings-label">Users</div><div class="earnings-amount" id="admin-users">—</div></div>
-                    <div class="earnings-card"><div class="earnings-label">Products</div><div class="earnings-amount" id="admin-products">—</div></div>
-                    <div class="earnings-card"><div class="earnings-label">Orders</div><div class="earnings-amount" id="admin-orders">—</div></div>
-                    <div class="earnings-card"><div class="earnings-label">Revenue</div><div class="earnings-amount">—</div></div>
-                </div>
-                <div class="profile-menu">
-                    ${ComponentFactory.profileMenuItem('👥','Users','ShoplifyApp.navigate("admin-users")')}
-                    ${ComponentFactory.profileMenuItem('📦','Products','ShoplifyApp.navigate("admin-products")')}
-                    ${ComponentFactory.profileMenuItem('📋','Orders','ShoplifyApp.navigate("admin-orders")')}
-                    ${ComponentFactory.profileMenuItem('🔒','Escrow','Toast.info("Escrow management")')}
-                    ${ComponentFactory.profileMenuItem('🏴','Reports','Toast.info("Reports queue")')}
-                </div>
-            </div>
-        `;
-        try {
-            const u = await Firebase.collections.users.count().get();
-            const p = await Firebase.collections.products.count().get();
-            const o = await Firebase.collections.orders.count().get();
-            DOMHelper.setText('admin-users', u.data?.count||0);
-            DOMHelper.setText('admin-products', p.data?.count||0);
-            DOMHelper.setText('admin-orders', o.data?.count||0);
-        } catch(e) {}
-    }
+    static renderHelp(){const container=document.getElementById('screen-help');if(!container)return;container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.goBack()">←</button><span style="font-weight:700;color:var(--dark)">Help & Support</span></div><div style="padding:16px"><div style="background:var(--cream);border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-weight:600;color:var(--dark)">📧 Contact Us</div><div style="color:var(--gray-600);font-size:0.8rem">Email: ${ADMIN_EMAIL}<br>Response: within 24 hours</div></div><div style="background:var(--cream);border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-weight:600;color:var(--dark)">💬 WhatsApp Community</div><div style="color:var(--gray-600);font-size:0.8rem">Join for tips and community support</div></div><div style="background:rgba(212,175,55,0.1);border-radius:12px;padding:16px;margin-bottom:16px"><div style="font-weight:600;color:var(--dark)">📚 FAQ</div><div style="color:var(--gray-600);font-size:0.8rem">How to sell? How to become an affiliate? How does dropshipping work? How does escrow protect me?</div></div><button class="btn btn-primary btn-block" onclick="window.open('${APP_CONFIG.whatsappCommunityLink}','_blank')">💬 Join WhatsApp</button><button class="btn btn-outline btn-block" style="margin-top:8px" onclick="Toast.info('Email: ${ADMIN_EMAIL}')">📧 Email Support</button></div>`;}
 
-    static async renderAdminUsers() {
-        const container = document.getElementById('screen-admin');
-        if (!container) return;
-        container.innerHTML = `<div class="back-header"><button class="back-btn" onclick="ShoplifyApp.navigate('admin')">←</button><span class="back-title">Users</span></div><div id="list">${SkeletonFactory.line()}${SkeletonFactory.line()}</div>`;
-        const snap = await Firebase.collections.users.limit(50).get();
-        const users = []; snap.forEach(d => users.push({ id: d.id, ...d.data() }));
-        DOMHelper.render('list', users.map(u => `<div style="padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;margin-bottom:8px"><strong>${ComponentFactory.escapeHtml(u.displayName||'User')}</strong><div style="font-size:0.75rem;color:var(--gray-500)">${u.email} · $${ComponentFactory.formatNumber(u.walletBalance||0)}</div></div>`).join(''));
-    }
+    static async renderAdmin(){const container=document.getElementById('screen-admin');if(!container)return;const app=window.ShoplifyApp||ShoplifyApp;if(!app.state.user||!ADMIN_EMAILS.includes(app.state.user.email)){container.innerHTML=`<div style="padding:16px"><button onclick="ShoplifyApp.goBack()">←</button></div><div style="text-align:center;padding:60px"><div style="font-size:3rem">🔒</div><div style="font-weight:600;color:var(--dark)">Access Denied</div></div>`;return;}container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.goBack()">←</button><span style="font-weight:700;color:var(--dark)">Admin</span></div><div style="padding:16px"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px"><div style="background:var(--cream);border-radius:12px;padding:16px"><div style="font-size:0.7rem;color:var(--gray-500)">USERS</div><div style="font-weight:700;font-size:1.5rem;color:var(--dark)" id="admin-users">—</div></div><div style="background:var(--cream);border-radius:12px;padding:16px"><div style="font-size:0.7rem;color:var(--gray-500)">PRODUCTS</div><div style="font-weight:700;font-size:1.5rem;color:var(--dark)" id="admin-products">—</div></div><div style="background:var(--cream);border-radius:12px;padding:16px"><div style="font-size:0.7rem;color:var(--gray-500)">ORDERS</div><div style="font-weight:700;font-size:1.5rem;color:var(--dark)" id="admin-orders">—</div></div><div style="background:var(--cream);border-radius:12px;padding:16px"><div style="font-size:0.7rem;color:var(--gray-500)">REVENUE</div><div style="font-weight:700;color:var(--dark)">—</div></div></div>${ComponentFactory.profileMenuItem('👥','Users','ShoplifyApp.navigate("admin-users")')}${ComponentFactory.profileMenuItem('📦','Products','ShoplifyApp.navigate("admin-products")')}${ComponentFactory.profileMenuItem('📋','Orders','ShoplifyApp.navigate("admin-orders")')}${ComponentFactory.profileMenuItem('🔒','Escrow','Toast.info("Escrow management")')}${ComponentFactory.profileMenuItem('🏴','Reports','Toast.info("Reports queue")')}</div>`;try{const u=await Firebase.collections.users.count().get();const p=await Firebase.collections.products.count().get();const o=await Firebase.collections.orders.count().get();DOMHelper.setText('admin-users',u.data?.count||0);DOMHelper.setText('admin-products',p.data?.count||0);DOMHelper.setText('admin-orders',o.data?.count||0);}catch(e){}}
 
-    static async renderAdminProducts() {
-        const container = document.getElementById('screen-admin');
-        if (!container) return;
-        container.innerHTML = `<div class="back-header"><button class="back-btn" onclick="ShoplifyApp.navigate('admin')">←</button><span class="back-title">Products</span></div><div id="list">${SkeletonFactory.productGrid(4)}</div>`;
-        const result = await Firebase.getProducts({}, 20);
-        if (result.success && result.products.length > 0) {
-            DOMHelper.render('list', `<div class="product-grid">${result.products.map(p => ComponentFactory.productCard(p, '$')).join('')}</div>`);
-        }
-    }
+    static async renderAdminUsers(){const container=document.getElementById('screen-admin');if(!container)return;container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.navigate('admin')">←</button><span style="font-weight:700;color:var(--dark)">Users</span></div><div id="list" style="padding:0 16px"></div>`;const snap=await Firebase.collections.users.limit(50).get();const users=[];snap.forEach(d=>users.push({id:d.id,...d.data()}));DOMHelper.render('list',users.map(u=>`<div style="background:var(--white);border:1px solid var(--gray-200);border-radius:12px;padding:16px;margin-bottom:8px"><strong style="color:var(--dark)">${ComponentFactory.escapeHtml(u.displayName||'User')}</strong><div style="font-size:0.75rem;color:var(--gray-500)">${u.email} · $${ComponentFactory.formatNumber(u.walletBalance||0)}</div></div>`).join(''));}
+    static async renderAdminProducts(){const container=document.getElementById('screen-admin');if(!container)return;container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.navigate('admin')">←</button><span style="font-weight:700;color:var(--dark)">Products</span></div><div id="list" style="padding:0 16px"></div>`;const result=await Firebase.getProducts({},20);if(result.success&&result.products.length>0){DOMHelper.render('list','<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+result.products.map(p=>ComponentFactory.productCard(p,'$')).join('')+'</div>');}}
+    static async renderAdminOrders(){const container=document.getElementById('screen-admin');if(!container)return;container.innerHTML=`<div style="padding:16px;display:flex;align-items:center;gap:12px"><button style="width:36px;height:36px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:50%;cursor:pointer" onclick="ShoplifyApp.navigate('admin')">←</button><span style="font-weight:700;color:var(--dark)">Orders</span></div><div id="list" style="padding:0 16px"></div>`;const snap=await Firebase.collections.orders.orderBy('createdAt','desc').limit(20).get();const orders=[];snap.forEach(d=>orders.push({id:d.id,...d.data()}));DOMHelper.render('list',orders.map(o=>ComponentFactory.orderCard(o,'$')).join(''));}
 
-    static async renderAdminOrders() {
-        const container = document.getElementById('screen-admin');
-        if (!container) return;
-        container.innerHTML = `<div class="back-header"><button class="back-btn" onclick="ShoplifyApp.navigate('admin')">←</button><span class="back-title">Orders</span></div><div id="list">${SkeletonFactory.orderCard()}${SkeletonFactory.orderCard()}</div>`;
-        const snap = await Firebase.collections.orders.orderBy('createdAt','desc').limit(20).get();
-        const orders = []; snap.forEach(d => orders.push({ id: d.id, ...d.data() }));
-        DOMHelper.render('list', orders.map(o => ComponentFactory.orderCard(o, '$')).join(''));
-    }
-
-    // ============================================================
-    // REPORTS
-    // ============================================================
-    static renderReports(productId) { ShoplifyFeatures.showReportForm(productId); }
-
-    static showReportForm(productId) {
-        const { sheet } = Modal.open(`
-            <div class="form-group"><label class="form-label">Reason</label><select class="form-input form-select" id="report-reason"><option value="">Select...</option>${REPORT_REASONS.map(r=>`<option value="${r}">${r}</option>`).join('')}</select></div>
-            <div class="form-group"><label class="form-label">Description</label><textarea class="form-input form-textarea" id="report-desc" placeholder="Details..."></textarea></div>
-            <button class="btn btn-primary btn-block" id="submit-report">Submit</button>
-        `, { title: '🏴 Report' });
-        sheet.querySelector('#submit-report').addEventListener('click', async () => {
-            const reason = sheet.querySelector('#report-reason').value;
-            if (!reason) { Toast.error('Select reason'); return; }
-            const desc = sheet.querySelector('#report-desc').value;
-            const app = window.ShoplifyApp || ShoplifyApp;
-            const result = await Firebase.submitReport({ productId, reason, description: desc, reportedBy: app.state.user?.uid, reportedByEmail: app.state.user?.email, status: 'pending', createdAt: new Date().toISOString() });
-            if (result.success) { Modal.close(); Toast.success('Reported!'); }
-            else Toast.error('Failed');
-        });
-    }
+    static renderReports(productId){ShoplifyFeatures.showReportForm(productId);}
+    static showReportForm(productId){const{sheet}=Modal.open(`<div class="form-group"><label class="form-label" style="color:var(--dark)">Reason</label><select class="form-input" id="report-reason" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"><option value="">Select...</option>${REPORT_REASONS.map(r=>`<option value="${r}">${r}</option>`).join('')}</select></div><div class="form-group"><label class="form-label" style="color:var(--dark)">Description</label><textarea class="form-input" id="report-desc" style="background:var(--gray-50);color:var(--dark);border:1px solid var(--gray-200)"></textarea></div><button class="btn btn-primary btn-block" id="submit-report">Submit</button>`,{title:'🏴 Report'});sheet.querySelector('#submit-report').addEventListener('click',async()=>{const reason=sheet.querySelector('#report-reason').value;if(!reason){Toast.error('Select reason');return;}const desc=sheet.querySelector('#report-desc').value;const app=window.ShoplifyApp||ShoplifyApp;const result=await Firebase.submitReport({productId,reason,description:desc,reportedBy:app.state.user?.uid,reportedByEmail:app.state.user?.email,status:'pending',createdAt:new Date().toISOString()});if(result.success){Modal.close();Toast.success('Reported!');}else Toast.error('Failed');});}
 }
 
 window.ShoplifyFeatures = ShoplifyFeatures;
-console.log('✅ Shoplify Features Loaded - Complete');
+console.log('✅ Shoplify Features Loaded - Complete Enterprise');
