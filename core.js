@@ -18,33 +18,40 @@ class ShoplifyAppClass {
             notifications: [],
             unreadNotifications: 0,
             isOnline: navigator.onLine,
-            initialized: false
+            initialized: false,
+            localCurrency: null,
+            conversionRate: null
         };
         this.screenCache = {};
         this.listeners = [];
         this.init();
     }
-    
+
     async init() {
         console.log('🚀 Shoplify Enterprise Initializing...');
         this.showSplash();
-        
+
         const countryResult = await GeolocationService.detectCountry();
         this.state.country = countryResult;
-        console.log('📍 Country detected:', countryResult.countryName);
-        
+        this.state.localCurrency = countryResult.currency;
+        console.log('📍 Country detected:', countryResult.countryName, countryResult.currency);
+
         const rateResult = await ExchangeRateService.getRates();
         if (rateResult.success) {
             this.state.exchangeRate = rateResult.rates;
+            if (rateResult.rates[countryResult.currency]) {
+                this.state.conversionRate = rateResult.rates[countryResult.currency];
+            }
+            console.log('💱 Exchange rates loaded');
         }
-        
+
         const unsubscribe = Firebase.onAuthStateChanged(async (user) => {
             if (user) {
                 console.log('👤 User authenticated:', user.email);
                 console.log('🔑 Session persisted:', !user.isAnonymous);
-                
+
                 this.state.user = Firebase.formatUserData(user);
-                
+
                 const profileResult = await Firebase.getUserProfile(user.uid);
                 if (profileResult.success) {
                     this.state.profile = profileResult.profile;
@@ -67,14 +74,14 @@ class ShoplifyAppClass {
                         this.updateUIForUser();
                     }
                 }
-                
+
                 this.startRealtimeListeners(user.uid);
-                
+
                 Firebase.trackEvent(ANALYTICS_EVENTS.sign_in, {
                     userId: user.uid,
                     country: this.state.country.countryCode
                 });
-                
+
                 this.hideAuth();
                 this.showApp();
                 this.navigate('home');
@@ -90,21 +97,38 @@ class ShoplifyAppClass {
             }
             this.state.initialized = true;
         });
-        
+
         this._authUnsubscribe = unsubscribe;
         this.setupNavigation();
         this.setupConnectivityDetection();
         this.restoreLocalData();
-        
+
         setTimeout(() => this.hideSplash(), 2000);
         console.log('✅ Shoplify Core Initialized');
     }
-    
+
+    convertToLocal(eurAmount) {
+        if (this.state.conversionRate) {
+            return eurAmount * this.state.conversionRate;
+        }
+        return eurAmount;
+    }
+
+    formatLocalCurrency(eurAmount) {
+        const localAmount = this.convertToLocal(eurAmount);
+        const symbol = this.state.country?.symbol || '€';
+        return `${symbol}${ComponentFactory.formatNumber(localAmount)}`;
+    }
+
+    formatEUR(eurAmount) {
+        return `€${ComponentFactory.formatNumber(eurAmount)}`;
+    }
+
     showSplash() {
         const el = document.getElementById('splash-screen');
         if (el) el.classList.remove('hidden');
     }
-    
+
     hideSplash() {
         const el = document.getElementById('splash-screen');
         if (el) {
@@ -112,7 +136,7 @@ class ShoplifyAppClass {
             setTimeout(() => { if (el) el.style.display = 'none'; }, 500);
         }
     }
-    
+
     showAuth() {
         const el = document.getElementById('auth-screen');
         if (el) {
@@ -120,25 +144,25 @@ class ShoplifyAppClass {
             this.setupAuthListeners();
         }
     }
-    
+
     hideAuth() {
         const el = document.getElementById('auth-screen');
         if (el) el.classList.add('hidden');
     }
-    
+
     setupAuthListeners() {
         const googleBtn = document.getElementById('google-signin-btn');
         const authLoader = document.getElementById('auth-loader');
         const authError = document.getElementById('auth-error');
-        
+
         if (googleBtn) {
             googleBtn.onclick = async () => {
                 googleBtn.style.display = 'none';
                 if (authLoader) authLoader.style.display = 'block';
                 if (authError) authError.style.display = 'none';
-                
+
                 const result = await Firebase.signInWithGoogle();
-                
+
                 if (!result.success) {
                     googleBtn.style.display = 'flex';
                     if (authLoader) authLoader.style.display = 'none';
@@ -151,17 +175,17 @@ class ShoplifyAppClass {
             };
         }
     }
-    
+
     showApp() {
         const el = document.getElementById('app-container');
         if (el) el.classList.add('active');
     }
-    
+
     hideApp() {
         const el = document.getElementById('app-container');
         if (el) el.classList.remove('active');
     }
-    
+
     setupNavigation() {
         document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', () => {
@@ -169,45 +193,45 @@ class ShoplifyAppClass {
                 this.navigate(screen);
             });
         });
-        
+
         window.addEventListener('popstate', (e) => {
             if (e.state && e.state.screen) {
                 this.navigate(e.state.screen, e.state.params, false);
             }
         });
     }
-    
+
     navigate(screen, params = null, addToHistory = true) {
         if (!this.state.initialized && screen !== 'home') return;
-        
+
         this.state.previousScreen = this.state.currentScreen;
         this.state.currentScreen = screen;
         this.state.screenParams = params;
-        
+
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        
+
         const screenEl = document.getElementById(`screen-${screen}`);
         if (screenEl) screenEl.classList.add('active');
-        
+
         document.querySelectorAll('.nav-item').forEach(item => {
             item.classList.toggle('active', item.dataset.screen === screen);
         });
-        
+
         if (addToHistory) {
             const url = params ? `#${screen}/${params}` : `#${screen}`;
             history.pushState({ screen, params }, '', url);
         }
-        
+
         this.renderScreen(screen, params);
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        
+
         Firebase.trackEvent(ANALYTICS_EVENTS.page_view, {
             screen,
             params,
             userId: this.state.user?.uid
         });
     }
-    
+
     goBack() {
         if (this.state.previousScreen) {
             this.navigate(this.state.previousScreen, null, true);
@@ -215,7 +239,7 @@ class ShoplifyAppClass {
             this.navigate('home');
         }
     }
-    
+
     renderScreen(screen, params) {
         const renderers = {
             'home': () => ShoplifyFeatures.renderHome(),
@@ -223,6 +247,7 @@ class ShoplifyAppClass {
             'product-detail': () => ShoplifyFeatures.renderProductDetail(params),
             'products': () => ShoplifyFeatures.renderProducts(params),
             'affiliate': () => ShoplifyFeatures.renderAffiliate(),
+            'affiliate-products': () => ShoplifyFeatures.renderAffiliateProducts(),
             'dropship': () => ShoplifyFeatures.renderDropship(),
             'wallet': () => ShoplifyFeatures.renderWallet(),
             'orders': () => ShoplifyFeatures.renderOrders(),
@@ -231,18 +256,27 @@ class ShoplifyAppClass {
             'settings': () => ShoplifyFeatures.renderSettings(),
             'store': () => ShoplifyFeatures.renderStore(params),
             'seller-dashboard': () => ShoplifyFeatures.renderSellerDashboard(),
+            'store-setup': () => ShoplifyFeatures.renderStoreSetup(),
             'notifications': () => ShoplifyFeatures.renderNotifications(),
             'admin': () => ShoplifyFeatures.renderAdmin(),
-            'reports': () => ShoplifyFeatures.renderReports(params)
+            'admin-users': () => ShoplifyFeatures.renderAdminUsers(),
+            'admin-products': () => ShoplifyFeatures.renderAdminProducts(),
+            'admin-orders': () => ShoplifyFeatures.renderAdminOrders(),
+            'reports': () => ShoplifyFeatures.renderReports(params),
+            'analytics': () => ShoplifyFeatures.renderAnalytics(),
+            'help': () => ShoplifyFeatures.renderHelp(),
+            'store-policies': () => ShoplifyFeatures.renderStorePolicies(),
+            'store-shipping': () => ShoplifyFeatures.renderStoreShipping(),
+            'store-payments': () => ShoplifyFeatures.renderStorePayments()
         };
-        
+
         if (renderers[screen]) {
             renderers[screen]();
         } else {
             ShoplifyFeatures.renderHome();
         }
     }
-    
+
     startRealtimeListeners(uid) {
         const profileListener = Firebase.listenToUserProfile(uid, (result) => {
             if (result.success) {
@@ -251,7 +285,7 @@ class ShoplifyAppClass {
             }
         });
         this.listeners.push(profileListener);
-        
+
         const notifListener = Firebase.collections.notifications
             .where('uid', '==', uid)
             .where('read', '==', false)
@@ -261,29 +295,28 @@ class ShoplifyAppClass {
             });
         this.listeners.push(notifListener);
     }
-    
+
     stopRealtimeListeners() {
         this.listeners.forEach(listener => {
             if (typeof listener === 'function') listener();
         });
         this.listeners = [];
     }
-    
+
     updateUIForUser() {
         this.updateHeaderBalance();
         this.updateNotificationDot();
         this.updateCartDot();
     }
-    
+
     updateHeaderBalance() {
         const balanceEl = document.getElementById('header-balance');
         if (balanceEl && this.state.profile) {
             const balance = this.state.profile.walletBalance || 0;
-            const symbol = this.state.country?.symbol || '€';
-            balanceEl.textContent = `${symbol}${ComponentFactory.formatNumber(balance)}`;
+            balanceEl.textContent = this.formatLocalCurrency(balance);
         }
     }
-    
+
     updateNotificationDot() {
         const dot = document.getElementById('notif-dot');
         if (dot) {
@@ -294,7 +327,7 @@ class ShoplifyAppClass {
             }
         }
     }
-    
+
     updateCartDot() {
         const dot = document.getElementById('cart-dot');
         if (dot) {
@@ -305,7 +338,7 @@ class ShoplifyAppClass {
             }
         }
     }
-    
+
     addToCart(product, quantity = 1, variant = null) {
         const existingIndex = this.state.cart.findIndex(item => {
             if (variant) {
@@ -315,7 +348,7 @@ class ShoplifyAppClass {
             }
             return item.productId === product.id;
         });
-        
+
         if (existingIndex >= 0) {
             this.state.cart[existingIndex].quantity += quantity;
         } else {
@@ -330,12 +363,12 @@ class ShoplifyAppClass {
                 storeName: product.storeName
             });
         }
-        
+
         this.saveCart();
         this.updateCartDot();
         Toast.success(`${product.name} added to cart`);
     }
-    
+
     removeFromCart(index) {
         if (index >= 0 && index < this.state.cart.length) {
             const item = this.state.cart[index];
@@ -345,7 +378,7 @@ class ShoplifyAppClass {
             Toast.info(`${item.name} removed from cart`);
         }
     }
-    
+
     updateCartQuantity(index, quantity) {
         if (index >= 0 && index < this.state.cart.length) {
             if (quantity <= 0) {
@@ -356,30 +389,30 @@ class ShoplifyAppClass {
             }
         }
     }
-    
+
     clearCart() {
         this.state.cart = [];
         this.saveCart();
         this.updateCartDot();
     }
-    
+
     getCartTotal() {
         return this.state.cart.reduce((total, item) => {
             return total + (item.price * item.quantity);
         }, 0);
     }
-    
+
     getCartCount() {
         return this.state.cart.reduce((count, item) => count + item.quantity, 0);
     }
-    
+
     saveCart() {
         localStorage.setItem('shoplify_cart', JSON.stringify(this.state.cart));
         if (this.state.user) {
             Firebase.updateUserProfile(this.state.user.uid, { cart: this.state.cart }).catch(() => {});
         }
     }
-    
+
     restoreLocalData() {
         const savedCart = localStorage.getItem('shoplify_cart');
         if (savedCart) {
@@ -388,7 +421,7 @@ class ShoplifyAppClass {
                 this.updateCartDot();
             } catch (e) {}
         }
-        
+
         const savedWishlist = localStorage.getItem('shoplify_wishlist');
         if (savedWishlist) {
             try {
@@ -396,7 +429,7 @@ class ShoplifyAppClass {
             } catch (e) {}
         }
     }
-    
+
     toggleWishlist(productId) {
         const index = this.state.wishlist.indexOf(productId);
         if (index >= 0) {
@@ -406,18 +439,18 @@ class ShoplifyAppClass {
             this.state.wishlist.push(productId);
             Toast.success('Added to wishlist');
         }
-        
+
         localStorage.setItem('shoplify_wishlist', JSON.stringify(this.state.wishlist));
-        
+
         if (this.state.user) {
             Firebase.updateUserProfile(this.state.user.uid, { wishlist: this.state.wishlist }).catch(() => {});
         }
     }
-    
+
     isWishlisted(productId) {
         return this.state.wishlist.includes(productId);
     }
-    
+
     openCart() {
         if (this.state.cart.length === 0) {
             const content = ComponentFactory.emptyState(
@@ -430,16 +463,16 @@ class ShoplifyAppClass {
             Modal.open(content, { title: 'Shopping Cart' });
             return;
         }
-        
+
         const symbol = this.state.country?.symbol || '€';
-        
+
         let cartHTML = this.state.cart.map((item, index) => `
             <div class="cart-item">
                 <img src="${item.image || APP_CONFIG.defaultProductImage}" alt="${item.name}" class="cart-item-img" onerror="this.src='${APP_CONFIG.defaultProductImage}'">
                 <div class="cart-item-info">
                     <div class="cart-item-name">${ComponentFactory.escapeHtml(item.name)}</div>
                     ${item.variant ? `<div style="font-size:0.75rem;color:var(--gray-500)">${item.variant.color || ''} ${item.variant.size || ''}</div>` : ''}
-                    <div class="cart-item-price">${symbol}${ComponentFactory.formatNumber(item.price)}</div>
+                    <div class="cart-item-price">${this.formatLocalCurrency(item.price)}</div>
                     <div class="cart-item-actions">
                         <div class="quantity-selector">
                             <button class="quantity-btn" onclick="ShoplifyApp.updateCartQuantity(${index}, ${item.quantity - 1}); ShoplifyApp.openCart();">−</button>
@@ -451,11 +484,11 @@ class ShoplifyAppClass {
                 </div>
             </div>
         `).join('');
-        
+
         const subtotal = this.getCartTotal();
         const shipping = subtotal > 0 ? 5.99 : 0;
         const total = subtotal + shipping;
-        
+
         const content = `
             <div style="max-height:50vh;overflow-y:auto;margin-bottom:16px">
                 ${cartHTML}
@@ -463,15 +496,15 @@ class ShoplifyAppClass {
             <div class="cart-summary">
                 <div class="cart-summary-row">
                     <span>Subtotal</span>
-                    <span>${symbol}${ComponentFactory.formatNumber(subtotal)}</span>
+                    <span>${this.formatLocalCurrency(subtotal)}</span>
                 </div>
                 <div class="cart-summary-row">
                     <span>Shipping</span>
-                    <span>${shipping > 0 ? symbol + ComponentFactory.formatNumber(shipping) : 'Free'}</span>
+                    <span>${shipping > 0 ? this.formatLocalCurrency(shipping) : 'Free'}</span>
                 </div>
                 <div class="cart-summary-total">
                     <span>Total</span>
-                    <span>${symbol}${ComponentFactory.formatNumber(total)}</span>
+                    <span>${this.formatLocalCurrency(total)} <small style="color:var(--gray-500);font-size:0.75rem">(${this.formatEUR(total)})</small></span>
                 </div>
             </div>
             <div style="display:flex;gap:10px">
@@ -479,27 +512,26 @@ class ShoplifyAppClass {
                 <button class="btn btn-primary btn-block" onclick="window.handleCheckoutClick()">Checkout</button>
             </div>
         `;
-        
+
         Modal.open(content, { title: 'Shopping Cart' });
     }
-    
+
     async checkout() {
         if (!this.state.user) {
             Toast.error('Please sign in to checkout');
             return;
         }
-        
+
         if (this.state.cart.length === 0) {
             Toast.warning('Your cart is empty');
             return;
         }
-        
+
         Modal.close();
-        
+
         const total = this.getCartTotal() + 5.99;
         const balance = this.state.profile?.walletBalance || 0;
-        const symbol = this.state.country?.symbol || '€';
-        
+
         if (balance < total) {
             const shortfall = total - balance;
             const content = `
@@ -507,9 +539,9 @@ class ShoplifyAppClass {
                     <div style="font-size:3rem;margin-bottom:12px">💰</div>
                     <p style="color:var(--gray-300);margin-bottom:16px">
                         <strong>Insufficient Balance</strong><br><br>
-                        Your balance: <strong style="color:var(--gold)">${symbol}${ComponentFactory.formatNumber(balance)}</strong><br>
-                        Order total: <strong>${symbol}${ComponentFactory.formatNumber(total)}</strong><br>
-                        Shortfall: <strong style="color:var(--red)">${symbol}${ComponentFactory.formatNumber(shortfall)}</strong>
+                        Your balance: <strong style="color:var(--gold)">${this.formatLocalCurrency(balance)}</strong><br>
+                        Order total: <strong>${this.formatLocalCurrency(total)}</strong> (${this.formatEUR(total)})<br>
+                        Shortfall: <strong style="color:var(--red)">${this.formatLocalCurrency(shortfall)}</strong>
                     </p>
                     <button class="btn btn-primary btn-block" onclick="Modal.close(); ShoplifyApp.navigate('wallet')">
                         💳 Deposit Funds
@@ -522,7 +554,7 @@ class ShoplifyAppClass {
             Modal.open(content, { title: 'Insufficient Funds' });
             return;
         }
-        
+
         const hasSeenWarning = localStorage.getItem('shoplify_deposit_warning_seen');
         if (!hasSeenWarning) {
             const confirmed = await Modal.confirm(
@@ -530,17 +562,17 @@ class ShoplifyAppClass {
                 'I Understand',
                 'Cancel'
             );
-            
+
             if (!confirmed) return;
             localStorage.setItem('shoplify_deposit_warning_seen', 'true');
         }
-        
+
         const deductResult = await Firebase.deductFromWallet(
             this.state.user.uid,
             total,
             `Purchase: ${this.state.cart.length} item(s)`
         );
-        
+
         if (deductResult.success) {
             const orderResult = await Firebase.createOrder({
                 customerId: this.state.user.uid,
@@ -550,42 +582,41 @@ class ShoplifyAppClass {
                 subtotal: this.getCartTotal(),
                 shipping: 5.99,
                 total: total,
-                currency: this.state.country?.currency || 'EUR',
+                currency: 'EUR',
                 country: this.state.country?.countryCode || 'US',
                 status: 'pending'
             });
-            
+
             if (orderResult.success) {
                 this.clearCart();
                 Toast.success('Order placed successfully!');
-                
+
                 Firebase.sendNotification(this.state.user.uid, {
                     type: 'order_update',
                     title: 'Order Confirmed',
                     body: `Your order #${orderResult.orderId.substring(0, 8).toUpperCase()} has been placed and is being processed.`,
                     data: { orderId: orderResult.orderId }
                 });
-                
+
                 this.navigate('orders');
             }
         } else {
             Toast.error(deductResult.error || 'Payment failed');
         }
     }
-    
+
     async depositFunds() {
         if (!this.state.user) {
             Toast.error('Please sign in first');
             return;
         }
-        
-        const symbol = this.state.country?.symbol || '€';
-        
+
         const content = `
             <div style="padding:8px 0">
                 <div class="form-group">
-                    <label class="form-label">Amount (${this.state.country?.currency || 'EUR'})</label>
-                    <input type="number" class="form-input" id="deposit-amount" placeholder="Enter amount" min="1" step="0.01">
+                    <label class="form-label">Amount (EUR)</label>
+                    <input type="number" class="form-input" id="deposit-amount" placeholder="Enter amount in EUR" min="1" step="0.01">
+                    <p style="font-size:0.75rem;color:var(--gold);margin-top:4px" id="deposit-local-display"></p>
                 </div>
                 <p style="font-size:0.75rem;color:var(--gray-500);margin-bottom:16px">
                     ⚠️ Funds deposited here are for purchases only. Not withdrawable.
@@ -595,26 +626,33 @@ class ShoplifyAppClass {
                 </button>
             </div>
         `;
-        
+
         const { sheet } = Modal.open(content, { title: 'Deposit Funds' });
-        
+
+        const amountInput = sheet.querySelector('#deposit-amount');
+        const localDisplay = sheet.querySelector('#deposit-local-display');
+
+        amountInput.addEventListener('input', () => {
+            const eur = parseFloat(amountInput.value) || 0;
+            localDisplay.textContent = `≈ ${this.formatLocalCurrency(eur)} ${this.state.country?.currency || ''}`;
+        });
+
         sheet.querySelector('#process-deposit-btn').addEventListener('click', async () => {
-            const amountInput = sheet.querySelector('#deposit-amount');
             const amount = parseFloat(amountInput.value);
-            
+
             if (!amount || amount <= 0) {
                 Toast.error('Please enter a valid amount');
                 return;
             }
-            
+
             const result = await FlutterwaveService.initializePayment({
                 amount,
-                currency: this.state.country?.currency || 'EUR',
+                currency: 'EUR',
                 email: this.state.user.email,
                 name: this.state.user.displayName,
                 description: 'Shoplify Wallet Deposit'
             });
-            
+
             if (result.success) {
                 await Firebase.creditWallet(
                     this.state.user.uid,
@@ -622,77 +660,77 @@ class ShoplifyAppClass {
                     `Deposit via Flutterwave (${result.transactionId})`,
                     'deposit'
                 );
-                
+
                 Modal.close();
-                Toast.success(`Deposited ${symbol}${ComponentFactory.formatNumber(amount)} successfully!`);
+                Toast.success(`Deposited €${ComponentFactory.formatNumber(amount)} (${this.formatLocalCurrency(amount)}) successfully!`);
                 this.renderWallet();
             } else if (!result.cancelled) {
                 Toast.error(result.error || 'Payment failed');
             }
         });
     }
-    
+
     withdrawFunds() {
         Toast.info('Withdrawals are processed via the Shoplify Wallet App. Please use the separate wallet application.');
     }
-    
+
     transferFunds() {
         Toast.info('Peer-to-peer transfers are available in the Shoplify Wallet App.');
     }
-    
+
     async uploadProfilePicture() {
         if (!this.state.user) {
             Toast.error('Please sign in first');
             return;
         }
-        
+
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = 'image/jpeg,image/png,image/webp';
-        
+
         input.onchange = async (e) => {
             const file = e.target.files[0];
             if (!file) return;
-            
+
             Toast.info('Uploading profile picture...');
-            
+
             const result = await CloudinaryService.uploadImage(file);
-            
+
             if (result.success) {
                 const user = Firebase.getCurrentUser();
                 if (user) {
                     await user.updateProfile({ photoURL: result.url });
                 }
-                
+
                 await Firebase.updateUserProfile(this.state.user.uid, { photoURL: result.url });
-                
+
                 this.state.user.photoURL = result.url;
                 if (this.state.profile) {
                     this.state.profile.photoURL = result.url;
                 }
-                
+
                 Toast.success('Profile picture updated!');
                 ShoplifyFeatures.renderProfile();
             } else {
                 Toast.error(result.error || 'Upload failed');
             }
         };
-        
+
         input.click();
     }
-    
+
     setupConnectivityDetection() {
         window.addEventListener('online', () => {
             this.state.isOnline = true;
             Toast.success('You are back online');
         });
-        
+
         window.addEventListener('offline', () => {
             this.state.isOnline = false;
             Toast.warning('You are offline. Some features may be limited.');
         });
     }
-    
+
     async markNotificationRead(notificationId) {
         if (this.state.user) {
             await Firebase.markNotificationRead(this.state.user.uid, notificationId);
@@ -700,15 +738,13 @@ class ShoplifyAppClass {
             this.updateNotificationDot();
         }
     }
-    
+
     subscribeToTier(tierId) {
         const tier = AFFILIATE_TIERS.find(t => t.id === tierId);
         if (!tier) return;
-        
-        const symbol = this.state.country?.symbol || '€';
-        
+
         Modal.confirm(
-            `Subscribe to <strong>${tier.emoji} ${tier.name}</strong> plan for <strong>€${tier.priceEUR}/month</strong>?<br><br>
+            `Subscribe to <strong>${tier.emoji} ${tier.name}</strong> plan for <strong>€${tier.priceEUR}/month</strong>?<br><small style="color:var(--gold)">≈ ${this.formatLocalCurrency(tier.priceEUR)}</small><br><br>
             ✓ ${tier.productLimit.toLocaleString()} Products<br>
             ✓ ${tier.commission}% Commission<br>
             ✓ Regions: ${tier.regions.join(', ')}`,
@@ -717,25 +753,25 @@ class ShoplifyAppClass {
         ).then(async (confirmed) => {
             if (confirmed) {
                 const balance = this.state.profile?.walletBalance || 0;
-                
+
                 if (balance < tier.priceEUR) {
-                    Toast.error(`Insufficient balance. Need €${tier.priceEUR}`);
+                    Toast.error(`Insufficient balance. Need €${tier.priceEUR} (${this.formatLocalCurrency(tier.priceEUR)})`);
                     return;
                 }
-                
+
                 const result = await Firebase.deductFromWallet(
                     this.state.user.uid,
                     tier.priceEUR,
                     `Affiliate subscription: ${tier.name}`
                 );
-                
+
                 if (result.success) {
                     await Firebase.updateUserProfile(this.state.user.uid, {
                         isAffiliate: true,
                         affiliateTier: tier.id,
                         affiliateSubscriptionExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
                     });
-                    
+
                     await Firebase.updateSubscription(this.state.user.uid, {
                         type: 'affiliate',
                         tier: tier.id,
@@ -744,16 +780,22 @@ class ShoplifyAppClass {
                         expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
                         status: 'active'
                     });
-                    
+
                     Toast.success(`Subscribed to ${tier.name} plan!`);
                     ShoplifyFeatures.renderAffiliate();
                 }
             }
         });
     }
-    
+
     filterByCategory(categoryId) {
         this.navigate('products', categoryId);
+    }
+
+    async generateAffiliateLink(productId) {
+        if (!this.state.user) return null;
+        const baseUrl = 'https://shoplify.netlify.app';
+        return `${baseUrl}?ref=${this.state.user.uid}&product=${productId}`;
     }
 }
 
@@ -786,7 +828,7 @@ window.handleDropshipActivate = function() {
 };
 
 window.handleCreateStore = function() {
-    ShoplifyFeatures.createStore();
+    ShoplifyApp.navigate('store-setup');
 };
 
 window.handleSignOut = function() {
@@ -795,26 +837,6 @@ window.handleSignOut = function() {
 
 window.handleReportClick = function(productId) {
     ShoplifyFeatures.showReportForm(productId);
-};
-
-window.handleFollowStore = function(storeId) {
-    Toast.info('Store followed! (Coming soon)');
-};
-
-window.handleShareProduct = function(productId) {
-    if (navigator.share) {
-        navigator.share({
-            title: 'Check out this product on Shoplify',
-            url: window.location.origin + '#product-detail/' + productId
-        }).catch(() => {});
-    } else {
-        const url = window.location.origin + '#product-detail/' + productId;
-        navigator.clipboard.writeText(url).then(() => {
-            Toast.success('Link copied!');
-        }).catch(() => {
-            Toast.info('Share URL: ' + url);
-        });
-    }
 };
 
 console.log('✅ Shoplify Core Loaded - App Instance Ready');
